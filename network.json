@@ -1,0 +1,20 @@
+[
+  {
+    "duration": 40,
+    "availableBandwidth": 4000000,
+    "latency": 65,
+    "packetLoss": 0
+  },
+  {
+    "duration": 7,
+    "availableBandwidth": 1500000,
+    "latency": 230,
+    "packetLoss": 0
+  },
+  {
+    "duration": 4,
+    "availableBandwidth": 3100000,
+    "latency": 400,
+    "packetLoss": 0
+  }
+]
