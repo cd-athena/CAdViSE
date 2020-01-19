@@ -16,7 +16,7 @@ newBuild=0
 ########################### functions ############################
 showError() {
   now=$(python -c 'import time; print time.time()')
-  printf "\e[1;31m>>> [ERROR %.20f] %s\e[0m\n" "$now" "$1"
+  printf "\e[1;31m>>> [ERROR %f] %s\e[0m\n" "$now" "$1"
   sudo docker rm -f ppt-$mode &>/dev/null
   sudo docker rm -f docker-tc &>/dev/null
   sudo docker network rm ppt-net &>/dev/null
@@ -25,7 +25,7 @@ showError() {
 
 showMessage() {
   now=$(python -c 'import time; print time.time()')
-  printf "\n\e[1;36m>>> [INFO %.20f] %s\e[0m\n" "$now" "$1"
+  printf "\n\e[1;36m>>> [INFO %f] %s\e[0m\n" "$now" "$1"
 }
 ########################### /functions ###########################
 
@@ -100,17 +100,25 @@ if [[ $newBuild == 1 ]]; then
   docker build --network=host --no-cache --rm=true --file ppt-$mode.docker --tag babakt/ppt-$mode .
 fi
 
-showMessage "Containerizing the ppt-$mode image"
-sudo docker run --rm -d --name ppt-$mode --net ppt-net -p 4080:4080 -p 5900:5900 --label "com.docker-tc.enabled=1" --label "com.docker-tc.limit=1mbps" --label "com.docker-tc.delay=70ms" -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
-
 durationOfExperiment=0
 for duration in "${shaperDurations[@]}"; do
   durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
 done
 
+netPort=4080
+vncPort=5900
 for player in "${players[@]}"; do
-  showMessage "Executing python scripts for $player player"
-  sudo docker exec -d ppt-$mode python /home/seluser/scripts/ppt.py "$baseURL$player" $numberOfExperiments "$durationOfExperiment"
+  showMessage "Containerizing the ppt-$mode image for $player player"
+  sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p $netPort:4080 -p $vncPort:5900 --label "com.docker-tc.enabled=1" --label "com.docker-tc.limit=1mbps" --label "com.docker-tc.delay=70ms" -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
+
+  netPort=$((netPort+1))
+  vncPort=$((vncPort+1))
+  sleep 1
+done
+
+for player in "${players[@]}"; do
+  showMessage "Executing python script for $player player"
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player" $numberOfExperiments "$durationOfExperiment"
 done
 
 for j in $(seq $numberOfExperiments); do
@@ -148,7 +156,9 @@ done
 
 showMessage "Removing the resources gracefully"
 sleep 2
-sudo docker rm -f ppt-$mode
+for player in "${players[@]}"; do
+  sudo docker rm -f "ppt-$mode-$player"
+done
 sudo docker rm -f docker-tc
 sudo docker network rm ppt-net
 
