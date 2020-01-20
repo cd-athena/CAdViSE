@@ -9,15 +9,8 @@
     <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>
 </head>
 <body>
-
-Session ID: <input type="text" size="40" maxlength="15" id="sessionID" name="sID"/>
-<script type="text/javascript">
-  const sessionID = document.getElementById("sessionID");
-</script>
-
 <div id="player"></div>
 <script type="text/javascript">
-
   let qualitySwitches = -1;
   const conf = {
     key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
@@ -26,7 +19,8 @@ Session ID: <input type="text" size="40" maxlength="15" id="sessionID" name="sID
       videoId: "ppt-test-bitmovin",
       title: "PPT - Bitmovin",
       cdnProvider: "AKAMAI",
-      debug: true,
+      experimentName: "<?=$_REQUEST['id']?>",
+      debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>
     },
 
     playback: {
@@ -39,8 +33,6 @@ Session ID: <input type="text" size="40" maxlength="15" id="sessionID" name="sID
       height: '360px',
       controls: true
     },
-
-    logs: {level: 'debug'},
 
     events: {
       videodownloadqualitychange: () => {
@@ -58,7 +50,6 @@ Session ID: <input type="text" size="40" maxlength="15" id="sessionID" name="sID
       },
     }
   };
-  conf.logs.level = 'debug';
 
   const source = {
     dash: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
@@ -67,14 +58,8 @@ Session ID: <input type="text" size="40" maxlength="15" id="sessionID" name="sID
   bitmovin.player.Player.addModule(bitmovin.analytics.PlayerModule);
   const player = new bitmovin.player.Player(document.getElementById('player'), conf);
 
-  console.log("DBG || player.analytics.version method: ", player.analytics.version);
-  console.log("DBG || window.bitmovin.analytics.version method: ", window.bitmovin.analytics.version);
-  console.log("DBG || bitmovin.analytics.version method: ", bitmovin.analytics.version);
-
-  sessionID.value = player.analytics.getCurrentImpressionId();
-  console.log("sessionID.value ", sessionID.value);
-
   player.load(source).then(() => {
+    console.log('Loaded!')
   }).catch((reason) => {
     console.error('player setup failed', reason);
   });

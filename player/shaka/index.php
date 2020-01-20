@@ -42,7 +42,8 @@
           videoId: "ppt-test-shaka",
           title: "PPT - Shaka",
           cdnProvider: "AKAMAI",
-          debug: true
+          experimentName: "<?=$_REQUEST['id']?>",
+          debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>
         }, player);
 
       }).catch(onError);  // onError is executed if the asynchronous load fails.

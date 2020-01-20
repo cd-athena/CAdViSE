@@ -26,7 +26,8 @@
                   videoId: "ppt-test-dashJS",
                   title: "PPT - DashJs",
                   cdnProvider: "AKAMAI",
-                  debug: true
+                  experimentName: "<?=$_REQUEST['id']?>",
+                  debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>
                 }, player, {starttime: time});
                 player.initialize(video, url, true);
             })();
