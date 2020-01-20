@@ -11,7 +11,7 @@ shaperDelays=(70 70 70 70 70)             #ms
 shaperBandwidths=(5000 1000 3000 500 100) #kbits
 shaperPacketLosses=(0 0 0 0 0)            # percentage
 newBuild=0
-experimentId=$(python -c 'import time; print time.time()')
+id=$(python -c 'import time; print time.time()')
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -87,8 +87,10 @@ for argument in "$@"; do
 done
 ########################### /arguments ############################
 
+printf "\n\e[1;33m>>> Experiment set id: $id %s\e[0m\n"
 showMessage "Running $numberOfExperiments experiment(s) in $mode mode on following players:"
 printf '%s ' "${players[@]}"
+printf "\n"
 
 showMessage "Creating network"
 sudo docker network create ppt-net || (sudo docker network rm ppt-net && sudo docker network create ppt-net) || exit 1
@@ -119,7 +121,7 @@ done
 
 for player in "${players[@]}"; do
   showMessage "Executing python script for $player player"
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$experimentId&mode=$mode" $numberOfExperiments "$durationOfExperiment" $mode
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" $numberOfExperiments "$durationOfExperiment" $mode
 done
 
 for j in $(seq $numberOfExperiments); do
