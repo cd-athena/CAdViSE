@@ -5,31 +5,27 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
-url = sys.argv[1]
-nbr_exp = int(sys.argv[2])
-time_sec = int(sys.argv[3])
+playerURL = sys.argv[1]
+experiments = int(sys.argv[2])
+duration = int(sys.argv[3])
+mode = int(sys.argv[4])
 
-
-
-def runPlayer( url, time_sec):
-    print(url)
+def runPlayer(playerURL, duration):
     options = Options()
-    #options.add_argument('--headless')
-    options.add_argument('--disable-gpu')  # Last I checked this was necessary.
+    if mode == "production":
+        options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
     options.add_argument('--autoplay-policy=no-user-gesture-required')
     driver = webdriver.Chrome(chrome_options=options)
-    #driver.implicitly_wait(10)
-    driver.get(url)
-    time.sleep(time_sec)
+    driver.get(playerURL)
+    time.sleep(duration)
     driver.quit()
-    #return
 
-
-def main(time_sec,url,nbr_exp):
+def main(duration, playerURL, experiments):
 	i=0
-	while i < nbr_exp:
-		runPlayer(url,time_sec)
+	while i < experiments:
+		runPlayer(playerURL, duration)
 		i+=1
+
 if __name__ == "__main__":
-    main(time_sec,url,nbr_exp)
-    
+    main(duration, playerURL, experiments)

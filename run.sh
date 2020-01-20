@@ -11,6 +11,7 @@ shaperDelays=(70 70 70 70 70)             #ms
 shaperBandwidths=(5000 1000 3000 500 100) #kbits
 shaperPacketLosses=(0 0 0 0 0)            # percentage
 newBuild=0
+experimentId=$(python -c 'import time; print time.time()')
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -111,18 +112,20 @@ for player in "${players[@]}"; do
   showMessage "Containerizing the ppt-$mode image for $player player"
   sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p $netPort:4080 -p $vncPort:5900 --label "com.docker-tc.enabled=1" --label "com.docker-tc.limit=1mbps" --label "com.docker-tc.delay=70ms" -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
 
-  netPort=$((netPort+1))
-  vncPort=$((vncPort+1))
+  netPort=$((netPort + 1))
+  vncPort=$((vncPort + 1))
   sleep 1
 done
 
 for player in "${players[@]}"; do
   showMessage "Executing python script for $player player"
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player" $numberOfExperiments "$durationOfExperiment"
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$experimentId&mode=$mode" $numberOfExperiments "$durationOfExperiment" $mode
 done
 
 for j in $(seq $numberOfExperiments); do
-  m=0; k=1; l=0
+  m=0
+  k=1
+  l=0
   sudo curl -d "rate=${shaperBandwidths[0]}kbit" localhost:4080/ppt-$mode
 
   for i in $(seq $durationOfExperiment); do
@@ -135,7 +138,7 @@ for j in $(seq $numberOfExperiments); do
       k=$((k + 1))
       l=$((l + 1))
     fi
-    echo "Status: in progress" #------------------------write information on the console
+    echo "Status: in progress"
     echo "Experiment $j/$numberOfExperiments"
     t=$((t + 1))
     Time=$(($durationOfExperiment * $numberOfExperiments))
@@ -152,7 +155,6 @@ for j in $(seq $numberOfExperiments); do
   done
   i=0
 done
-
 
 showMessage "Removing the resources gracefully"
 sleep 2
