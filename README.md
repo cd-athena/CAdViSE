@@ -14,8 +14,9 @@ $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 ```
 - Passing `--build` would cause the image to be built on your local machine instead of being fetched from dockerhub.
 - `--players` accepts three values `bitmovin`, `shaka` and `dashJs`
-- Omitting `--debug` would cause the test to be executed in production mode
+- Omitting `--debug` would cause the test to be executed in production mode (no monitoring provided)
 - Update network simulator values such as available bandwidth in `network.json`
+- Number of experiments can be defined by `--experiments`
 
 #### Monitoring in debug mode
 Use VNC client to connect to `127.0.0.1:5900` while the test is running.
