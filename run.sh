@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ########################### configurations ###########################
-# these would be overwritten by arguments passed to the command
+# some of these would be overwritten by arguments passed to the command
 mode="production"
 baseURL="https://www.itec.aau.at/~babak/player/"
 players=("bitmovin" "dashJS" "shaka")
@@ -17,7 +17,7 @@ id=$(python -c 'import time; print time.time()')
 ########################### functions ############################
 showError() {
   now=$(python -c 'import time; print time.time()')
-  printf "\e[1;31m>>> [ERROR %f] %s\e[0m\n" "$now" "$1"
+  printf "\e[1;31m>>> [ERROR %.2f] %s\e[0m\n" "$now" "$1"
   sudo docker rm -f ppt-$mode &>/dev/null
   sudo docker rm -f docker-tc &>/dev/null
   sudo docker network rm ppt-net &>/dev/null
@@ -26,7 +26,7 @@ showError() {
 
 showMessage() {
   now=$(python -c 'import time; print time.time()')
-  printf "\n\e[1;36m>>> [INFO %f] %s\e[0m\n" "$now" "$1"
+  printf "\n\e[1;36m>>> [INFO %.2f] %s\e[0m\n" "$now" "$1"
 }
 ########################### /functions ###########################
 

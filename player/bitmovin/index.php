@@ -22,29 +22,24 @@
       experimentName: "<?=$_REQUEST['id']?>",
       debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>
     },
-
     playback: {
       autoplay: true,
       muted: false
     },
-
     style: {
       width: '640px',
       height: '360px',
       controls: true
     },
-
     events: {
       videodownloadqualitychange: () => {
         ++qualitySwitches;
         console.log("adaptation --->", qualitySwitches);
       },
-
       play: (e) => {
         initTime = new Date().getTime();
         console.log("PLAY --->", initTime);
       },
-
       stallstarted: (e) => {
         console.log("STALL --->", initTime);
       },
