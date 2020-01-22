@@ -5,7 +5,7 @@
 mode="production"
 baseURL="https://www.itec.aau.at/~babak/player/"
 players=("bitmovin" "dashJS" "shaka")
-numberOfExperiments=1
+experiments=1
 shaperDurations=(15 15 20 10 15)          #sec
 shaperDelays=(70 70 70 70 70)             #ms
 shaperBandwidths=(5000 1000 3000 500 100) #kbits
@@ -37,8 +37,8 @@ for argument in "$@"; do
     case $argument in
     "--experiments")
       nextArgumentIndex=$((argumentIndex + 2))
-      numberOfExperiments="${!nextArgumentIndex}"
-      if ! [[ $numberOfExperiments =~ ^[0-9]+$ ]]; then
+      experiments="${!nextArgumentIndex}"
+      if ! [[ $experiments =~ ^[0-9]+$ ]]; then
         showError "Experiments parameter should follow by an integer number"
       fi
       ;;
@@ -50,6 +50,9 @@ for argument in "$@"; do
       shaperDurations=($(echo "$networkConfig" | jq '.[].duration'))
       shaperBandwidths=($(echo "$networkConfig" | jq '.[].availableBandwidth'))
       shaperPacketLosses=($(echo "$networkConfig" | jq '.[].packetLoss'))
+      shaperPacketDuplicates=($(echo "$networkConfig" | jq '.[].packetDuplicate'))
+      shaperPacketCorruptions=($(echo "$networkConfig" | jq '.[].packetCorruption'))
+      "packetCorruption": 0
       ;;
     "--debug")
       mode="debug"
@@ -88,15 +91,15 @@ done
 ########################### /arguments ############################
 
 printf "\n\e[1;33m>>> Experiment set id: $id %s\e[0m\n"
-showMessage "Running $numberOfExperiments experiment(s) in $mode mode on following players:"
+showMessage "Running $experiments experiment(s) in $mode mode on following players:"
 printf '%s ' "${players[@]}"
 printf "\n"
 
-showMessage "Creating network"
-sudo docker network create ppt-net || (sudo docker network rm ppt-net && sudo docker network create ppt-net) || exit 1
+showMessage "Creating docker network"
+sudo docker network create ppt-net || (sudo docker network rm ppt-net && sudo docker network create ppt-net) || showError "Failed to create docker network"
 
 showMessage "Containerizing traffic control image"
-sudo docker run -d --name docker-tc --network host --cap-add NET_ADMIN -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/docker-tc:/tmp/docker-tc lukaszlach/docker-tc
+sudo docker run -d --name docker-tc --network host --cap-add NET_ADMIN -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/docker-tc:/tmp/docker-tc lukaszlach/docker-tc || showError "Failed to containerize the traffic control image"
 
 if [[ $newBuild == 1 ]]; then
   showMessage "Building ppt-$mode docker image"
@@ -108,42 +111,60 @@ for duration in "${shaperDurations[@]}"; do
   durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
 done
 
-netPort=4080
 vncPort=5900
 for player in "${players[@]}"; do
   showMessage "Containerizing the ppt-$mode image for $player player"
-  sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p $netPort:4080 -p $vncPort:5900 --label "com.docker-tc.enabled=1" --label "com.docker-tc.limit=1mbps" --label "com.docker-tc.delay=70ms" -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
+  sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p $vncPort:5900 \
+    --label "com.docker-tc.enabled=1" \
+    --label "com.docker-tc.limit=${shaperBandwidths[0]}kbit" \
+    --label "com.docker-tc.delay=${shaperDelays[0]}ms" \
+    --label "com.docker-tc.loss=${shaperPacketLosses[0]}%" \
+    --label "com.docker-tc.duplicate=${shaperPacketDuplicates[0]}%" \
+    --label "com.docker-tc.corrupt=${shaperPacketCorruptions[0]}%" \
+    -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
 
-  netPort=$((netPort + 1))
   vncPort=$((vncPort + 1))
   sleep 1
 done
 
 for player in "${players[@]}"; do
   showMessage "Executing python script for $player player"
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" $numberOfExperiments "$durationOfExperiment" $mode
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" $experiments "$durationOfExperiment" $mode
 done
 
-for j in $(seq $numberOfExperiments); do
+currentExperiment=0
+while [ $currentExperiment -lt $experiments ]; do
+  currentExperiment=$((currentExperiment + 1))
+
+  for player in "${players[@]}"; do
+    sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[0]}kbit" "localhost:4080/ppt-$mode-$player"
+  done
+done
+
+for j in $(seq $experiments); do
   m=0
   k=1
   l=0
-  sudo curl -d "rate=${shaperBandwidths[0]}kbit" localhost:4080/ppt-$mode
+
+  for player in "${players[@]}"; do
+    sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[0]}kbit" "localhost:4080/ppt-$mode-$player"
+  done
 
   for i in $(seq $durationOfExperiment); do
     let "time_seg = $(echo ${shaperDurations[$l]})"
-    let "time_t = time_seg + m "
+    let "time_t = time_seg + m"
     if (($i == $time_t)); then #test if we change segment
       let "m = i"
       rate=${shaperBandwidths[$k]}
-      sudo curl -d"rate= $rate kbit" localhost:4444/ppt-$mode
+      for player in "${players[@]}"; do
+        sudo docker exec "docker-tc" curl -sd"rate= $rate kbit" "localhost:4080/ppt-$mode-$player"
+      done
       k=$((k + 1))
       l=$((l + 1))
     fi
-    echo "Status: in progress"
-    echo "Experiment $j/$numberOfExperiments"
+    echo "Experiment $j/$experiments"
     t=$((t + 1))
-    Time=$(($durationOfExperiment * $numberOfExperiments))
+    Time=$(($durationOfExperiment * $experiments))
     time_exp=$((Time - t))
     min=$((time_exp / 60))
     sec=$((time_exp % 60))
