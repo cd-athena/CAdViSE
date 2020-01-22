@@ -123,60 +123,32 @@ for player in "${players[@]}"; do
     --label "com.docker-tc.corrupt=${shaperPacketCorruptions[0]}%" \
     -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
 
-  vncPort=$((vncPort + 1))
+  ((vncPort++))
   sleep 1
 done
 
 for player in "${players[@]}"; do
-  showMessage "Executing python script for $player player"
+  showMessage "Running the $player player with selenium for the next ${shaperDurations[0]}ms"
   sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" $experiments "$durationOfExperiment" $mode
 done
 
+sleep $((shaperDurations / 1000))
+
 currentExperiment=0
 while [ $currentExperiment -lt $experiments ]; do
-  currentExperiment=$((currentExperiment + 1))
+  ((currentExperiment++))
 
-  for player in "${players[@]}"; do
-    sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[0]}kbit" "localhost:4080/ppt-$mode-$player"
+  shaperIndex=1
+  while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
+    showMessage "Reshaping the network for the next ${shaperDurations[$shaperIndex]}ms"
+
+    for player in "${players[@]}"; do
+      sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[$shaperIndex]}kbit&delay=${shaperDelays[$shaperIndex]}ms&loss=${shaperPacketLosses[$shaperIndex]}%&duplicate=${shaperPacketDuplicates[$shaperIndex]}%&corrupt=${shaperPacketCorruptions[$shaperIndex]}%" "localhost:4080/ppt-$mode-$player"
+    done
+
+    sleep $((shaperDurations[shaperIndex] / 1000))
+    ((shaperIndex++))
   done
-done
-
-for j in $(seq $experiments); do
-  m=0
-  k=1
-  l=0
-
-  for player in "${players[@]}"; do
-    sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[0]}kbit" "localhost:4080/ppt-$mode-$player"
-  done
-
-  for i in $(seq $durationOfExperiment); do
-    let "time_seg = $(echo ${shaperDurations[$l]})"
-    let "time_t = time_seg + m"
-    if (($i == $time_t)); then #test if we change segment
-      let "m = i"
-      rate=${shaperBandwidths[$k]}
-      for player in "${players[@]}"; do
-        sudo docker exec "docker-tc" curl -sd"rate= $rate kbit" "localhost:4080/ppt-$mode-$player"
-      done
-      k=$((k + 1))
-      l=$((l + 1))
-    fi
-    echo "Experiment $j/$experiments"
-    t=$((t + 1))
-    Time=$(($durationOfExperiment * $experiments))
-    time_exp=$((Time - t))
-    min=$((time_exp / 60))
-    sec=$((time_exp % 60))
-    min_exp=$(($Time / 60))
-    sec_exp=$(($Time % 60))
-    echo "Full time = $min_exp:$sec_exp min"
-    echo "Time to end = $min:$sec min"
-    echo " "
-    sleep 1
-    i=$((i + 1))
-  done
-  i=0
 done
 
 showMessage "Removing the resources gracefully"

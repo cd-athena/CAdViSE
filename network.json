@@ -1,6 +1,6 @@
 [
   {
-    "duration": 10,
+    "duration": 10000,
     "availableBandwidth": 10000,
     "latency": 0,
     "packetLoss": 0,
@@ -8,7 +8,7 @@
     "packetCorruption": 0
   },
   {
-    "duration": 10,
+    "duration": 3000,
     "availableBandwidth": 100,
     "latency": 0,
     "packetLoss": 0,
@@ -16,7 +16,7 @@
     "packetCorruption": 0
   },
   {
-    "duration": 10,
+    "duration": 5000,
     "availableBandwidth": 500,
     "latency": 0,
     "packetLoss": 0,
