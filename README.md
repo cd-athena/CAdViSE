@@ -1,7 +1,12 @@
 ### Adaptive Streaming Players Performance Testbed
 This is based on https://github.com/ValBr11/docker-evaluation-players
 - Works with multi players
-- Configurable network attributes are `availableBandwidth`, `latency` and `packetLoss`
+- Configurable network attributes are
+    - `availableBandwidth` (kbit)
+    - `latency` (ms)
+    - `packetLoss` (percentage)
+    - `packetDuplicate` (percentage)
+    - `packetCorruption` (percentage)
  
 #### Requirements
 - docker
