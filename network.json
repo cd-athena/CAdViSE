@@ -1,23 +1,23 @@
 [
   {
     "duration": 10000,
-    "availableBandwidth": 10000,
+    "availableBandwidth": 100000,
     "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 3000,
-    "availableBandwidth": 100,
-    "latency": 0,
-    "packetLoss": 0,
+    "duration": 10000,
+    "availableBandwidth": 100000,
+    "latency": 400,
+    "packetLoss": 20,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 5000,
-    "availableBandwidth": 500,
+    "duration": 10000,
+    "availableBandwidth": 100000,
     "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,

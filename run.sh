@@ -52,7 +52,6 @@ for argument in "$@"; do
       shaperPacketLosses=($(echo "$networkConfig" | jq '.[].packetLoss'))
       shaperPacketDuplicates=($(echo "$networkConfig" | jq '.[].packetDuplicate'))
       shaperPacketCorruptions=($(echo "$networkConfig" | jq '.[].packetCorruption'))
-      "packetCorruption": 0
       ;;
     "--debug")
       mode="debug"
@@ -91,7 +90,17 @@ done
 ########################### /arguments ############################
 
 printf "\n\e[1;33m>>> Experiment set id: $id %s\e[0m\n"
-showMessage "Running $experiments experiment(s) in $mode mode on following players:"
+
+durationOfExperiment=0
+for duration in "${shaperDurations[@]}"; do
+  durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
+done
+
+if [[ $durationOfExperiment -gt 180000 ]]; then
+  showError "Maximum duration of each experiment can not be more than current test video length (3 minutes)"
+fi
+
+showMessage "Running $experiments experiment(s) in $mode mode on the following players for ${durationOfExperiment}ms each"
 printf '%s ' "${players[@]}"
 printf "\n"
 
@@ -106,11 +115,6 @@ if [[ $newBuild == 1 ]]; then
   docker build --network=host --no-cache --rm=true --file ppt-$mode.docker --tag babakt/ppt-$mode .
 fi
 
-durationOfExperiment=0
-for duration in "${shaperDurations[@]}"; do
-  durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
-done
-
 vncPort=5900
 for player in "${players[@]}"; do
   showMessage "Containerizing the ppt-$mode image for $player player"
@@ -124,26 +128,27 @@ for player in "${players[@]}"; do
     -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
 
   ((vncPort++))
-  sleep 1
 done
-
-for player in "${players[@]}"; do
-  showMessage "Running the $player player with selenium for the next ${shaperDurations[0]}ms"
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" $experiments "$durationOfExperiment" $mode
-done
-
-sleep $((shaperDurations / 1000))
 
 currentExperiment=0
 while [ $currentExperiment -lt $experiments ]; do
   ((currentExperiment++))
 
+  showMessage "Running the tests with selenium for the next ${shaperDurations[0]}ms in experiment $currentExperiment"
+  echo "Set rate=${shaperBandwidths[0]}kbit, delay=${shaperDelays[0]}ms, loss=${shaperPacketLosses[0]}%, duplicate=${shaperPacketDuplicates[0]}%, corrupt=${shaperPacketCorruptions[0]}%"
+  for player in "${players[@]}"; do
+    sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" "$durationOfExperiment" $mode
+  done
+
+  sleep $((shaperDurations / 1000))
+
   shaperIndex=1
   while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
-    showMessage "Reshaping the network for the next ${shaperDurations[$shaperIndex]}ms"
+    showMessage "Reshaping the network for the next ${shaperDurations[$shaperIndex]}ms in experiment $currentExperiment"
+    echo "Set rate=${shaperBandwidths[$shaperIndex]}kbit, delay=${shaperDelays[$shaperIndex]}ms, loss=${shaperPacketLosses[$shaperIndex]}%, duplicate=${shaperPacketDuplicates[$shaperIndex]}%, corrupt=${shaperPacketCorruptions[$shaperIndex]}%"
 
     for player in "${players[@]}"; do
-      sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[$shaperIndex]}kbit&delay=${shaperDelays[$shaperIndex]}ms&loss=${shaperPacketLosses[$shaperIndex]}%&duplicate=${shaperPacketDuplicates[$shaperIndex]}%&corrupt=${shaperPacketCorruptions[$shaperIndex]}%" "localhost:4080/ppt-$mode-$player"
+      sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[$shaperIndex]}kbit&delay=${shaperDelays[$shaperIndex]}ms&loss=${shaperPacketLosses[$shaperIndex]}%&duplicate=${shaperPacketDuplicates[$shaperIndex]}%&corrupt=${shaperPacketCorruptions[$shaperIndex]}%" "localhost:4080/ppt-$mode-$player" &>/dev/null
     done
 
     sleep $((shaperDurations[shaperIndex] / 1000))
@@ -151,8 +156,7 @@ while [ $currentExperiment -lt $experiments ]; do
   done
 done
 
-showMessage "Removing the resources gracefully"
-sleep 2
+showMessage "Removing the resources"
 for player in "${players[@]}"; do
   sudo docker rm -f "ppt-$mode-$player"
 done

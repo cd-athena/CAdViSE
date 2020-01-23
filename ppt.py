@@ -6,9 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 playerURL = sys.argv[1]
-experiments = int(sys.argv[2])
-duration = int(sys.argv[3])
-mode = sys.argv[4]
+duration = int(sys.argv[2])
+mode = sys.argv[3]
 
 def runPlayer(playerURL, duration):
     options = Options()
@@ -21,11 +20,8 @@ def runPlayer(playerURL, duration):
     time.sleep(duration)
     driver.quit()
 
-def main(duration, playerURL, experiments):
-	i=0
-	while i < experiments:
-		runPlayer(playerURL, duration)
-		i+=1
+def main(duration, playerURL):
+    runPlayer(playerURL, duration)
 
 if __name__ == "__main__":
-    main(duration, playerURL, experiments)
+    main(duration, playerURL)
