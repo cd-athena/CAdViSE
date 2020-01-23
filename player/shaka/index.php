@@ -15,8 +15,8 @@
       player.load(manifestUri).then(function() {
         new bitmovin.analytics.adapters.ShakaAdapter({
           key: "a014a94a-489a-4abf-813f-f47303c3912a",
-          videoId: "ppt-test-shaka",
-          title: "PPT - Shaka",
+          videoId: "ppt-test",
+          title: "PPT - Test",
           cdnProvider: "AKAMAI",
           experimentName: "<?=$_REQUEST['id']?>",
           debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>

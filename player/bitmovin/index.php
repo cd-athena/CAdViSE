@@ -16,8 +16,8 @@
     key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
     analytics: {
       key: "a014a94a-489a-4abf-813f-f47303c3912a",
-      videoId: "ppt-test-bitmovin",
-      title: "PPT - Bitmovin",
+      videoId: "ppt-test",
+      title: "PPT - Test",
       cdnProvider: "AKAMAI",
       experimentName: "<?=$_REQUEST['id']?>",
       debug: <?=(isset($_REQUEST['mode']) && $_REQUEST['mode']=='debug') ? "true" : "false"?>
