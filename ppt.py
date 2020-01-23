@@ -8,7 +8,7 @@ import time
 playerURL = sys.argv[1]
 experiments = int(sys.argv[2])
 duration = int(sys.argv[3])
-mode = int(sys.argv[4])
+mode = sys.argv[4]
 
 def runPlayer(playerURL, duration):
     options = Options()
