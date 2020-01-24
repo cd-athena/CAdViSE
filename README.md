@@ -18,7 +18,7 @@ This is based on https://github.com/ValBr11/docker-evaluation-players
 $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 ```
 - Passing `--build` would cause the image to be built on your local machine instead of being fetched from dockerhub.
-- `--players` accepts three values `bitmovin`, `shaka` and `dashJs`
+- `--players` accepts three values `bitmovin`, `shaka` and `dashjs`
 - Omitting `--debug` would cause the test to be executed in production mode (no monitoring provided)
 - Update network simulator values such as available bandwidth in `network.json`
 - Number of experiments can be defined by `--experiments`

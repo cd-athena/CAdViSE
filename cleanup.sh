@@ -1,6 +1,6 @@
 sudo docker rm -f ppt-debug-bitmovin
 sudo docker rm -f ppt-debug-shaka
-sudo docker rm -f ppt-debug-dashJS
+sudo docker rm -f ppt-debug-dashjs
 sudo docker rm -f docker-tc
 sudo docker network rm ppt-net
 #sudo docker container prune

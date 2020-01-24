@@ -4,7 +4,7 @@
 # some of these would be overwritten by arguments passed to the command
 mode="production"
 baseURL="https://www.itec.aau.at/~babak/player/"
-players=("bitmovin" "dashJS" "shaka")
+players=("bitmovin" "dashjs" "shaka")
 experiments=1
 shaperDurations=(15 15 20 10 15)          #sec
 shaperDelays=(70 70 70 70 70)             #ms
