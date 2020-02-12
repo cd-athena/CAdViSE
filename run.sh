@@ -23,15 +23,27 @@ instanceIds=""
 showError() {
   now=$(python -c 'import time; print time.time()')
   printf "\e[1;31m>>> [ERROR %.2f] %s\e[0m\n" "$now" "$1"
-  sudo docker rm -f ppt-$mode &>/dev/null
-  sudo docker rm -f docker-tc &>/dev/null
-  sudo docker network rm ppt-net &>/dev/null
-  exit 1
+  cleanExit 1
 }
 
 showMessage() {
   now=$(python -c 'import time; print time.time()')
   printf "\n\e[1;36m>>> [INFO %.2f] %s\e[0m\n" "$now" "$1"
+}
+
+cleanExit() {
+  if [[ $awsProfile != "" ]]; then
+    showMessage "Killing EC2 instances"
+    aws ec2 terminate-instances --instance-ids $instanceIds --profile $awsProfile &>/dev/null
+  else
+    showMessage "Removing docker containers"
+    for player in "${players[@]}"; do
+      sudo docker rm -f "ppt-$mode-$player"
+    done
+    sudo docker rm -f docker-tc
+    sudo docker network rm ppt-net
+  fi
+  exit $1
 }
 ########################### /functions ###########################
 
@@ -281,16 +293,4 @@ else
   done
 fi
 
-if [[ $awsProfile != "" ]]; then
-  showMessage "Killing EC2 instances"
-  aws ec2 terminate-instances --instance-ids $instanceIds --profile $awsProfile &>/dev/null
-else
-  showMessage "Removing docker containers"
-  for player in "${players[@]}"; do
-    sudo docker rm -f "ppt-$mode-$player"
-  done
-  sudo docker rm -f docker-tc
-  sudo docker network rm ppt-net
-fi
-
-exit 0
+cleanExit 0
