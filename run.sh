@@ -38,10 +38,10 @@ cleanExit() {
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
-      sudo docker rm -f "ppt-$mode-$player"
+      sudo docker rm -f "ppt-$mode-$player" &>/dev/null
     done
-    sudo docker rm -f docker-tc
-    sudo docker network rm ppt-net
+    sudo docker rm -f docker-tc &>/dev/null
+    sudo docker network rm ppt-net &>/dev/null
   fi
   exit $1
 }
