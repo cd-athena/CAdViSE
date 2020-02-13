@@ -6,10 +6,12 @@ mode="production"
 baseURL="https://www.itec.aau.at/~babak/player/"
 players=("bitmovin" "dashjs" "shaka")
 experiments=1
-shaperDurations=(15 15 20 10 15)          #sec
-shaperDelays=(70 70 70 70 70)             #ms
-shaperBandwidths=(5000 1000 3000 500 100) #kbits
-shaperPacketLosses=(0 0 0 0 0)            # percentage
+shaperDurations=(15000)     #ms
+shaperDelays=(70)           #ms
+shaperBandwidths=(5000)     #kbits
+shaperPacketLosses=(0)      #percentage
+shaperPacketDuplicates=(0)  #percentage
+shaperPacketCorruptions=(0) #percentage
 newBuild=0
 id=$(python -c 'import time; print time.time()' | cut -c1-10)
 awsProfile=""
@@ -17,6 +19,7 @@ awsKey=""
 awsIAMRole=""
 awsSecurityGroup=""
 instanceIds=""
+networkConfig=""
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -152,6 +155,7 @@ if [[ $awsProfile != "" ]]; then
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-$id}]" \
     --profile $awsProfile >instances.json || showError "Failed to run the aws command. Check your aws credentials."
 
   instanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
@@ -175,6 +179,16 @@ if [[ $awsProfile != "" ]]; then
   config="${config/--mode--/$mode}"
   config="${config/--baseURL--/$baseURL}"
   config="${config/--experimentDuration--/$durationOfExperiment}"
+  if [[ $networkConfig == "" ]]; then
+    networkConfig="{
+      \"duration\": ${shaperDurations[0]},
+      \"availableBandwidth\": ${shaperBandwidths[0]},
+      \"latency\": ${shaperDelays[0]},
+      \"packetLoss\": ${shaperPacketLosses[0]},
+      \"packetDuplicate\": ${shaperPacketDuplicates[0]},
+      \"packetCorruption\": ${shaperPacketCorruptions[0]}
+    }"
+  fi
   config="${config/\"--shapes--\"/$networkConfig}"
 
   playerIndex=0
@@ -215,14 +229,17 @@ if [[ $awsProfile != "" ]]; then
     sleep 5
     SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
   done
-
   echo "$SSMCommandResult"
+
+  if [[ $SSMCommandResult == *"Failed"* ]]; then
+    showError "Failed to initiate the instance(s). Check the S3 bucket for details"
+  fi
 
   currentExperiment=0
   while [ $currentExperiment -lt $experiments ]; do
     ((currentExperiment++))
 
-    showMessage "Executing start script(s) for experiment"
+    showMessage "Executing start script(s) for experiment $currentExperiment"
     SSMCommandId=$(aws ssm send-command \
       --instance-ids $instanceIds \
       --document-name "AWS-RunShellScript" \
@@ -240,8 +257,12 @@ if [[ $awsProfile != "" ]]; then
       sleep 5
       SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
     done
-
     echo "$SSMCommandResult"
+
+    if [[ $SSMCommandResult == *"Failed"* ]]; then
+      showError "Failed to start the experiment(s). Check the S3 bucket for details"
+    fi
+
   done
 
 else
