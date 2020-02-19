@@ -11,7 +11,7 @@ This is based on https://github.com/ValBr11/docker-evaluation-players
  
 #### Requirements
 - [docker](https://docs.docker.com/install/)
-- [python 2.7 or higher](https://www.python.org/downloads/)
+- [python 2.7](https://www.python.org/downloads/)
 - [jq](https://stedolan.github.io/jq)
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 
