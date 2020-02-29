@@ -3,6 +3,8 @@
   "mode": "--mode--",
   "player": "--player--",
   "baseURL": "--baseURL--",
+  "alk": "--alk--",
+  "mpdURL": "--mpdURL--",
   "experimentDuration": "--experimentDuration--",
   "shapes": "--shapes--"
 }

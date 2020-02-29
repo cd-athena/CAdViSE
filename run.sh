@@ -3,7 +3,7 @@
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
 mode="production"
-baseURL="https://www.itec.aau.at/~babak/player/"
+baseURL="http://ppt-players.s3-website.eu-central-1.amazonaws.com/"
 players=("bitmovin" "dashjs" "shaka")
 experiments=1
 shaperDurations=(15000)     #ms
@@ -20,6 +20,8 @@ awsIAMRole=""
 awsSecurityGroup=""
 instanceIds=""
 networkConfig=""
+analyticsLicenseKey=""
+mpdURL=""
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -132,8 +134,8 @@ for duration in "${shaperDurations[@]}"; do
   durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
 done
 
-if [[ $durationOfExperiment -gt 180000 ]]; then
-  showError "Maximum duration of each experiment can not be more than current test video length (3 minutes)"
+if [[ $durationOfExperiment -gt 596000 ]]; then
+  showError "Maximum duration of each experiment can not be more than current test video length (09:56)"
 fi
 
 showMessage "Running $experiments experiment(s) in $mode mode on the following players for ${durationOfExperiment}ms each"
@@ -178,6 +180,8 @@ if [[ $awsProfile != "" ]]; then
   config="${configSkeleton/--id--/$id}"
   config="${config/--mode--/$mode}"
   config="${config/--baseURL--/$baseURL}"
+  config="${config/--alk--/$analyticsLicenseKey}"
+  config="${config/--mpdURL--/$mpdURL}"
   config="${config/--experimentDuration--/$durationOfExperiment}"
   if [[ $networkConfig == "" ]]; then
     networkConfig="{
@@ -198,17 +202,18 @@ if [[ $awsProfile != "" ]]; then
     else
       config="${config/${players[playerIndex - 1]}/${players[playerIndex]}}"
     fi
-    ((playerIndex++))
     echo "$config" >"aws/config.json"
 
-    showMessage "Waiting for network interface to be reachable [$publicIp]"
+    showMessage "Waiting for network interface to be reachable [${players[playerIndex]}]"
     while ! nc -w5 -z "$publicIp" 22; do
       sleep 1
     done
 
-    showMessage "Injecting scripts and configurations into EC2 [$publicIp]"
+    showMessage "Injecting scripts and configurations into instance"
     scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/init.sh aws/start.sh aws/config.json ec2-user@"$publicIp":/home/ec2-user
     rm -f "aws/config.json"
+
+    ((playerIndex++))
   done
 
   showMessage "Executing initializer script(s)"
