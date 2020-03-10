@@ -299,7 +299,7 @@ else
     showMessage "Running the tests with selenium for the next ${shaperDurations[0]}ms in experiment $currentExperiment"
     echo "Set rate=${shaperBandwidths[0]}kbit, delay=${shaperDelays[0]}ms, loss=${shaperPacketLosses[0]}%, duplicate=${shaperPacketDuplicates[0]}%, corrupt=${shaperPacketCorruptions[0]}%"
     for player in "${players[@]}"; do
-      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode" "$durationOfExperiment" $mode
+      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
     done
 
     sleep $((shaperDurations / 1000))
