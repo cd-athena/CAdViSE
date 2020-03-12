@@ -18,7 +18,8 @@ awsProfile=""
 awsKey=""
 awsIAMRole=""
 awsSecurityGroup=""
-instanceIds=""
+serverInstanceId=""
+clientInstanceIds=""
 networkConfig=""
 analyticsLicenseKey=""
 mpdURL=""
@@ -39,7 +40,7 @@ showMessage() {
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
     showMessage "Killing EC2 instances"
-    aws ec2 terminate-instances --instance-ids $instanceIds --profile $awsProfile &>/dev/null
+    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -148,8 +149,21 @@ if [[ $newBuild == 1 ]]; then
 fi
 
 if [[ $awsProfile != "" ]]; then
-  showMessage "Spinning up EC2 instance(s)"
+  showMessage "Spining up server EC2 instance"
+  aws ec2 run-instances \
+    --image-id ami-0ab838eeee7f316eb \
+    --instance-type t3a.2xlarge \
+    --key-name $awsKey \
+    --iam-instance-profile Name=$awsIAMRole \
+    --security-groups $awsSecurityGroup \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-server-$id}]" \
+    --profile $awsProfile >instance.json || showError "Failed to run the aws command. Check your aws credentials."
 
+  serverInstanceId=$(jq -r '.Instances[].InstanceId' <instance.json)
+  printf '%s ' "${serverInstanceId[@]}"
+  printf "\n"
+
+  showMessage "Spinning up client EC2 instance(s)"
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
     --count ${#players[@]} \
@@ -157,24 +171,25 @@ if [[ $awsProfile != "" ]]; then
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-$id}]" \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-client-$id}]" \
     --profile $awsProfile >instances.json || showError "Failed to run the aws command. Check your aws credentials."
 
-  instanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
-  printf '%s ' "${instanceIds[@]}"
+  clientInstanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
+  printf '%s ' "${clientInstanceIds[@]}"
   printf "\n"
 
   stateCodes=0
   while [ $stateCodes == 0 ] || [ $(($stateCodesSum / ${#stateCodes[@]})) != 16 ]; do
     stateCodesSum=0
     sleep 3
-    stateCodes=($(aws ec2 describe-instances --instance-ids $instanceIds --profile $awsProfile | jq '.Reservations[].Instances[].State.Code'))
+    stateCodes=($(aws ec2 describe-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile | jq '.Reservations[].Instances[].State.Code'))
     for stateCode in "${stateCodes[@]}"; do
       ((stateCodesSum += stateCode))
     done
   done
 
-  publicIps=($(aws ec2 describe-instances --instance-ids $instanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
+  clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
+  serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 
   configSkeleton=$(cat aws/configSkeleton.json)
   config="${configSkeleton/--id--/$id}"
@@ -196,7 +211,7 @@ if [[ $awsProfile != "" ]]; then
   config="${config/\"--shapes--\"/$networkConfig}"
 
   playerIndex=0
-  for publicIp in "${publicIps[@]}"; do
+  for publicIp in "${clientPublicIps[@]}"; do
     if [[ $playerIndex == 0 ]]; then
       config="${config/--player--/${players[playerIndex]}}"
     else
@@ -216,9 +231,27 @@ if [[ $awsProfile != "" ]]; then
     ((playerIndex++))
   done
 
+  showMessage "Waiting for server network interface to be reachable"
+  while ! nc -w5 -z "$serverPublicIp" 22; do
+    sleep 1
+  done
+
+  showMessage "Running server"
+  SSMCommandId=$(aws ssm send-command \
+    --instance-ids serverInstanceId \
+    --document-name "AWS-RunShellScript" \
+    --comment "Run server" \
+    --parameters commands="node /home/ppt/index.js" \
+    --output-s3-bucket-name "ppt-output" \
+    --output-s3-key-prefix "server-out/$id" \
+    --query "Command.CommandId" \
+    --profile $awsProfile | sed -e 's/^"//' -e 's/"$//')
+
+  echo "$SSMCommandId"
+
   showMessage "Executing initializer script(s)"
   SSMCommandId=$(aws ssm send-command \
-    --instance-ids $instanceIds \
+    --instance-ids $clientInstanceIds \
     --document-name "AWS-RunShellScript" \
     --comment "Initialize" \
     --parameters commands="/home/ec2-user/init.sh" \
@@ -246,7 +279,7 @@ if [[ $awsProfile != "" ]]; then
 
     showMessage "Executing start script(s) for experiment $currentExperiment"
     SSMCommandId=$(aws ssm send-command \
-      --instance-ids $instanceIds \
+      --instance-ids $clientInstanceIds \
       --document-name "AWS-RunShellScript" \
       --comment "Start" \
       --parameters commands="/home/ec2-user/start.sh" \
