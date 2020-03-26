@@ -21,8 +21,9 @@ awsSecurityGroup=""
 serverInstanceId=""
 clientInstanceIds=""
 networkConfig=""
-analyticsLicenseKey=""
-mpdURL=""
+analyticsLicenseKey="a014a94a-489a-4abf-813f-f47303c3912a"
+serverURL="https://ppt-input.s3.eu-central-1.amazonaws.com/"
+mpdName="6sec/BigBuckBunny_6s_simple_2014_05_09.mpd"
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -40,7 +41,7 @@ showMessage() {
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
     showMessage "Killing EC2 instances"
-    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
+#    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -145,7 +146,7 @@ printf "\n"
 
 if [[ $newBuild == 1 ]]; then
   showMessage "Building ppt-$mode docker image"
-  docker build --network=host --no-cache --rm=true --file ppt-$mode.docker --tag babakt/ppt-$mode .
+  docker build --network=host --no-cache --file ppt-$mode.docker --tag babakt/ppt-$mode .
 fi
 
 if [[ $awsProfile != "" ]]; then
@@ -178,6 +179,7 @@ if [[ $awsProfile != "" ]]; then
   printf '%s ' "${clientInstanceIds[@]}"
   printf "\n"
 
+  showMessage "Waiting for instances to be in running state"
   stateCodes=0
   while [ $stateCodes == 0 ] || [ $(($stateCodesSum / ${#stateCodes[@]})) != 16 ]; do
     stateCodesSum=0
@@ -187,16 +189,17 @@ if [[ $awsProfile != "" ]]; then
       ((stateCodesSum += stateCode))
     done
   done
+  echo "all up"
 
   clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
   serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
-
-  configSkeleton=$(cat aws/configSkeleton.json)
+  serverURL="http://$serverPublicIp/"
+  configSkeleton=$(cat aws/client/configSkeleton.json)
   config="${configSkeleton/--id--/$id}"
   config="${config/--mode--/$mode}"
   config="${config/--baseURL--/$baseURL}"
   config="${config/--alk--/$analyticsLicenseKey}"
-  config="${config/--mpdURL--/$mpdURL}"
+  config="${config/--mpdURL--/$serverURL$mpdName}"
   config="${config/--experimentDuration--/$durationOfExperiment}"
   if [[ $networkConfig == "" ]]; then
     networkConfig="{
@@ -217,16 +220,15 @@ if [[ $awsProfile != "" ]]; then
     else
       config="${config/${players[playerIndex - 1]}/${players[playerIndex]}}"
     fi
-    echo "$config" >"aws/config.json"
+    echo "$config" >"config.json"
 
-    showMessage "Waiting for network interface to be reachable [${players[playerIndex]}]"
+    showMessage "Waiting for cleint network interface to be reachable [${players[playerIndex]}]"
     while ! nc -w5 -z "$publicIp" 22; do
       sleep 1
     done
 
-    showMessage "Injecting scripts and configurations into instance"
-    scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/init.sh aws/start.sh aws/config.json ec2-user@"$publicIp":/home/ec2-user
-    rm -f "aws/config.json"
+    showMessage "Injecting scripts and configurations into client instance"
+    scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/client/init.sh aws/client/start.sh config.json ec2-user@"$publicIp":/home/ec2-user
 
     ((playerIndex++))
   done
@@ -236,22 +238,13 @@ if [[ $awsProfile != "" ]]; then
     sleep 1
   done
 
-  showMessage "Running server"
-  SSMCommandId=$(aws ssm send-command \
-    --instance-ids serverInstanceId \
-    --document-name "AWS-RunShellScript" \
-    --comment "Run server" \
-    --parameters commands="node /home/ppt/index.js" \
-    --output-s3-bucket-name "ppt-output" \
-    --output-s3-key-prefix "server-out/$id" \
-    --query "Command.CommandId" \
-    --profile $awsProfile | sed -e 's/^"//' -e 's/"$//')
-
-  echo "$SSMCommandId"
+  showMessage "Injecting scripts and configurations into server instance"
+  scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/server/init.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
+  rm -f "config.json"
 
   showMessage "Executing initializer script(s)"
   SSMCommandId=$(aws ssm send-command \
-    --instance-ids $clientInstanceIds \
+    --instance-ids $clientInstanceIds $serverInstanceId \
     --document-name "AWS-RunShellScript" \
     --comment "Initialize" \
     --parameters commands="/home/ec2-user/init.sh" \
@@ -332,7 +325,7 @@ else
     showMessage "Running the tests with selenium for the next ${shaperDurations[0]}ms in experiment $currentExperiment"
     echo "Set rate=${shaperBandwidths[0]}kbit, delay=${shaperDelays[0]}ms, loss=${shaperPacketLosses[0]}%, duplicate=${shaperPacketDuplicates[0]}%, corrupt=${shaperPacketCorruptions[0]}%"
     for player in "${players[@]}"; do
-      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
+      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$serverURL$mpdName&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
     done
 
     sleep $((shaperDurations / 1000))

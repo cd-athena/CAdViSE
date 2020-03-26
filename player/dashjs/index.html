@@ -36,6 +36,10 @@
                     break;
             }
         });
+        experimentId = "qwedwe"
+        mode = "debug"
+        alk = "a014a94a-489a-4abf-813f-f47303c3912a"
+        mpdURL = "https://ppt-input.s3.eu-central-1.amazonaws.com/6sec/BigBuckBunny_6s_simple_2014_05_09.mpd"
         const video = document.getElementById('video');
         const time = new Date().getTime();
         const player = dashjs.MediaPlayer().create();
@@ -47,7 +51,9 @@
             experimentName: experimentId,
             debug: mode
         }, player, {starttime: time});
+
         player.initialize(video, mpdURL, false);
+
         player.play();
     });
 </script>
