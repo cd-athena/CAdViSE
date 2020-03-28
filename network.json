@@ -1,6 +1,6 @@
 [
   {
-    "duration": 60000,
+    "duration": 120000,
     "availableBandwidth": 40000,
     "latency": 0,
     "packetLoss": 0,
@@ -8,15 +8,15 @@
     "packetCorruption": 0
   },
   {
-    "duration": 60000,
+    "duration": 120000,
     "availableBandwidth": 40000,
-    "latency": 100,
+    "latency": 1000,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 60000,
+    "duration": 120000,
     "availableBandwidth": 40000,
     "latency": 0,
     "packetLoss": 0,

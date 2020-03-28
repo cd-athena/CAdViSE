@@ -239,7 +239,7 @@ if [[ $awsProfile != "" ]]; then
   done
 
   showMessage "Injecting scripts and configurations into server instance"
-  scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/server/init.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
+  scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/server/init.sh aws/server/start.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
   rm -f "config.json"
 
   showMessage "Executing initializer script(s)"
@@ -272,7 +272,7 @@ if [[ $awsProfile != "" ]]; then
 
     showMessage "Running experiment $currentExperiment of $experiments"
     SSMCommandId=$(aws ssm send-command \
-      --instance-ids $clientInstanceIds \
+      --instance-ids $clientInstanceIds $serverInstanceId \
       --document-name "AWS-RunShellScript" \
       --comment "Start" \
       --parameters commands="/home/ec2-user/start.sh" \
