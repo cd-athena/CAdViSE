@@ -41,7 +41,7 @@ showMessage() {
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
     showMessage "Killing EC2 instances"
-#    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
+    #    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -189,7 +189,7 @@ if [[ $awsProfile != "" ]]; then
       ((stateCodesSum += stateCode))
     done
   done
-  echo "all up"
+  echo "all up [$stateCodesSum]"
 
   clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
   serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
@@ -270,7 +270,7 @@ if [[ $awsProfile != "" ]]; then
   while [ $currentExperiment -lt $experiments ]; do
     ((currentExperiment++))
 
-    showMessage "Executing start script(s) for experiment $currentExperiment"
+    showMessage "Running experiment $currentExperiment of $experiments"
     SSMCommandId=$(aws ssm send-command \
       --instance-ids $clientInstanceIds \
       --document-name "AWS-RunShellScript" \
@@ -284,9 +284,16 @@ if [[ $awsProfile != "" ]]; then
     echo "$SSMCommandId"
 
     SSMCommandResult="InProgress"
+    timer=$durationOfExperiment/1000
     while [[ $SSMCommandResult == *"InProgress"* ]]; do
-      sleep 5
-      SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+      minutes=$((timer / 60))
+      seconds=$((timer % 60))
+      printf '\r%s' "~$minutes:$seconds  "
+      ((timer -= 1))
+      sleep 1
+      if [ $((timer % 10)) == 0 ]; then
+        SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+      fi
     done
     echo "$SSMCommandResult"
 

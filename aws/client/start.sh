@@ -10,5 +10,6 @@ duration=$(($(echo "$config" | jq -r '.experimentDuration') / 1000))
 mode=$(echo "$config" | jq -r '.mode')
 player=$(echo "$config" | jq -r '.player')
 
-sudo docker restart "ppt-$mode-$player" && sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
-sleep $((duration / 1000))
+#sudo docker restart "ppt-$mode-$player" &&
+sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
+sleep $((duration))
