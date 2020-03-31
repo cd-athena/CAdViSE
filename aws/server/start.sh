@@ -17,3 +17,5 @@ while [ $shaperIndex -lt "${#durations[@]}" ]; do
   sleep $((durations[shaperIndex] / 1000))
   ((shaperIndex++))
 done
+
+exit 0

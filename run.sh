@@ -22,7 +22,7 @@ serverInstanceId=""
 clientInstanceIds=""
 networkConfig=""
 analyticsLicenseKey="a014a94a-489a-4abf-813f-f47303c3912a"
-serverURL="https://ppt-input.s3.eu-central-1.amazonaws.com/"
+serverURL=""
 mpdName="6sec/BigBuckBunny_6s_simple_2014_05_09.mpd"
 ########################### /configurations ##########################
 
@@ -41,7 +41,7 @@ showMessage() {
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
     showMessage "Killing EC2 instances"
-    #    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
+    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -193,7 +193,8 @@ if [[ $awsProfile != "" ]]; then
 
   clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
   serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
-  serverURL="http://$serverPublicIp/"
+  serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
+  serverURL="http://$serverPrivateIp/"
   configSkeleton=$(cat aws/client/configSkeleton.json)
   config="${configSkeleton/--id--/$id}"
   config="${config/--mode--/$mode}"
@@ -256,11 +257,20 @@ if [[ $awsProfile != "" ]]; then
   echo "$SSMCommandId"
 
   SSMCommandResult="InProgress"
+  timer=0
   while [[ $SSMCommandResult == *"InProgress"* ]]; do
-    sleep 5
-    SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+    minutes=$((timer / 60))
+    seconds=$((timer % 60))
+    printf '\r%s' "~ $minutes:$seconds  "
+    if [ $((timer % 5)) == 0 ]; then
+      SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+      sleep 0.4
+    else
+      sleep 1
+    fi
+    ((timer += 1))
   done
-  echo "$SSMCommandResult"
+  printf "\n"
 
   if [[ $SSMCommandResult == *"Failed"* ]]; then
     showError "Failed to initiate the instance(s). Check the S3 bucket for details"
@@ -284,21 +294,24 @@ if [[ $awsProfile != "" ]]; then
     echo "$SSMCommandId"
 
     SSMCommandResult="InProgress"
-    timer=$durationOfExperiment/1000
+    time=$durationOfExperiment/1000
+    timer=$time
     while [[ $SSMCommandResult == *"InProgress"* ]]; do
       minutes=$((timer / 60))
       seconds=$((timer % 60))
-      printf '\r%s' "~$minutes:$seconds  "
-      ((timer -= 1))
-      sleep 1
-      if [ $((timer % 10)) == 0 ]; then
+      printf '\r%s' "~ $minutes:$seconds  "
+      if [ $((timer % 30)) == 0 ] || [[ $((time - timer)) -gt $time ]]; then
         SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+        sleep 0.4
+      else
+        sleep 1
       fi
+      ((timer -= 1))
     done
-    echo "$SSMCommandResult"
+    printf "\n"
 
     if [[ $SSMCommandResult == *"Failed"* ]]; then
-      showError "Failed to start the experiment(s). Check the S3 bucket for details"
+      showError "Failed to run experiment(s). Check the S3 bucket for details"
     fi
 
   done

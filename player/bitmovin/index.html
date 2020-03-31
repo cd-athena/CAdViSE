@@ -11,89 +11,89 @@
 <body>
 <div id="player"></div>
 <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', () => {
-        const keyValues = window.location.search.substr(1).split('&');
-        let experimentId, mode, alk, mpdURL;
-        keyValues.forEach(keyValueString => {
-            let keyValueArray = keyValueString.split('=');
-            switch (keyValueArray[0]) {
-                case 'id':
-                    experimentId = keyValueArray[1];
-                    break;
-                case 'mode':
-                    mode = keyValueArray[1];
-                    break;
-                case 'alk':
-                    alk = keyValueArray[1];
-                    break;
-                case 'mpdURL':
-                    mpdURL = keyValueArray[1];
-                    break;
+  document.addEventListener('DOMContentLoaded', () => {
+    const keyValues = window.location.search.substr(1).split('&')
+    let experimentId, mode, alk, mpdURL
+    keyValues.forEach(keyValueString => {
+      let keyValueArray = keyValueString.split('=')
+      switch (keyValueArray[0]) {
+        case 'id':
+          experimentId = keyValueArray[1]
+          break
+        case 'mode':
+          mode = keyValueArray[1]
+          break
+        case 'alk':
+          alk = keyValueArray[1]
+          break
+        case 'mpdURL':
+          mpdURL = keyValueArray[1]
+          break
+      }
+    })
+
+    experimentId = 'qwedwe'
+    mode = 'debug'
+    alk = 'a014a94a-489a-4abf-813f-f47303c3912a'
+    mpdURL = 'https://ppt-input.s3.eu-central-1.amazonaws.com/6sec/BigBuckBunny_6s_simple_2014_05_09.mpd'
+
+    let qualityUp = 0
+    let qualityDown = 0
+    let startupBitrate = 0
+    const config = {
+      key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
+      analytics: {
+        key: alk,
+        videoId: 'ppt-test',
+        title: 'BigBuckBunny_6s_simple_2014_05_09',
+        cdnProvider: 'S3',
+        experimentName: experimentId,
+        debug: false
+      },
+      playback: {
+        autoplay: true,
+        muted: false
+      },
+      style: {
+        width: '640px',
+        height: '360px',
+        controls: true
+      },
+      events: {
+        videodownloadqualitychange: (event) => {
+          if (event.sourceQuality) {
+            if (event.targetQuality.bitrate > event.sourceQuality.bitrate) {
+              qualityUp++
+            } else {
+              qualityDown++
             }
-        });
+          } else {
+            startupBitrate = event.targetQuality.bitrate
+          }
+        },
 
-        experimentId = "qwedwe"
-        mode = "debug"
-        alk = "a014a94a-489a-4abf-813f-f47303c3912a"
-        mpdURL = "https://ppt-input.s3.eu-central-1.amazonaws.com/6sec/BigBuckBunny_6s_simple_2014_05_09.mpd"
+        play: (e) => {
+          initTime = new Date().getTime()
+          console.log('PLAY --->', initTime)
+        },
 
-        let qualityUp = 0;
-        let qualityDown = 0;
-        let startupBitrate = 0;
-        const config = {
-            key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
-            analytics: {
-                key: alk,
-                videoId: "ppt-test",
-                title: "BigBuckBunny_6s_simple_2014_05_09",
-                cdnProvider: "S3",
-                experimentName: experimentId,
-                debug: false
-            },
-            playback: {
-                autoplay: true,
-                muted: false
-            },
-            style: {
-                width: '640px',
-                height: '360px',
-                controls: true
-            },
-            events: {
-                videodownloadqualitychange: (event) => {
-                    if (event.sourceQuality) {
-                        if (event.targetQuality.bitrate > event.sourceQuality.bitrate) {
-                            qualityUp++
-                        } else {
-                            qualityDown++
-                        }
-                    }else{
-                        startupBitrate = event.targetQuality.bitrate
-                    }
-                },
+        stallstarted: (e) => {
+          console.log('STALL --->', initTime)
+        }
+      }
+    }
 
-                play: (e) => {
-                    initTime = new Date().getTime();
-                    console.log("PLAY --->", initTime);
-                },
+    bitmovin.player.Player.addModule(bitmovin.analytics.PlayerModule)
+    const player = new bitmovin.player.Player(document.getElementById('player'), config)
 
-                stallstarted: (e) => {
-                    console.log("STALL --->", initTime);
-                }
-            }
-        };
-
-        bitmovin.player.Player.addModule(bitmovin.analytics.PlayerModule);
-        const player = new bitmovin.player.Player(document.getElementById('player'), config);
-
-        player.load({
-            dash: mpdURL,
-        }).then(() => {
-            console.log('Loaded!')
-        }).catch((reason) => {
-            console.error('player setup failed', reason);
-        });
-    });
+    player.load({
+      dash: mpdURL,
+    }).then(() => {
+      console.log('Loaded!')
+    }).catch((reason) => {
+      console.error('player setup failed', reason)
+    })
+  })
 
 </script>
 

@@ -1,7 +1,5 @@
 FROM selenium/standalone-chrome-debug:latest
-
 MAINTAINER babak@itec.aau.at
-
 RUN sudo apt-get update && sudo apt-get install -y mc python-pip iputils-ping
 
 RUN pip install selenium
