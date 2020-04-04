@@ -23,7 +23,7 @@ clientInstanceIds=""
 networkConfig=""
 analyticsLicenseKey="a014a94a-489a-4abf-813f-f47303c3912a"
 serverURL=""
-mpdName="6sec/BigBuckBunny_6s_simple_2014_05_09.mpd"
+mpdName="4sec/manifest.mpd"
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -153,7 +153,7 @@ if [[ $awsProfile != "" ]]; then
   showMessage "Spining up server EC2 instance"
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
-    --instance-type t3a.2xlarge \
+    --instance-type t2.small \
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \
@@ -168,7 +168,7 @@ if [[ $awsProfile != "" ]]; then
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
     --count ${#players[@]} \
-    --instance-type t2.medium \
+    --instance-type t2.micro \
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \

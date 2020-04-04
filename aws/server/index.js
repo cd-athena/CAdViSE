@@ -13,16 +13,16 @@ app.get('/ping', (request, response) => {
   response.send('pong')
 })
 
-app.get('/6sec/:fileName', (request, response) => {
+app.get('/4sec/:fileName', (request, response) => {
   const { fileName } = request.params
   console.log('Serving', fileName)
-  fs.createReadStream('dataset/6sec/' + fileName).pipe(response)
+  fs.createReadStream('dataset/4sec/' + fileName).pipe(response)
 })
 
-app.get('/6sec/:filePath/:fileName', (request, response) => {
+app.get('/4sec/:filePath/:fileName', (request, response) => {
   const { filePath, fileName } = request.params
   console.log('Serving', filePath, fileName)
-  fs.createReadStream('dataset/6sec/' + filePath + '/' + fileName).pipe(response)
+  fs.createReadStream('dataset/4sec/' + filePath + '/' + fileName).pipe(response)
 })
 
 app.listen(80, () => {
