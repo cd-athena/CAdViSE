@@ -1,6 +1,7 @@
 {
   "id": "--id--",
   "mode": "--mode--",
+  "throttle": "--throttle--",
   "player": "--player--",
   "baseURL": "--baseURL--",
   "alk": "--alk--",

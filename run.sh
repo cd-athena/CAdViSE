@@ -14,6 +14,7 @@ shaperPacketDuplicates=(0)  #percentage
 shaperPacketCorruptions=(0) #percentage
 newBuild=0
 id=$(python -c 'import time; print time.time()' | cut -c1-10)
+throttle="client"
 awsProfile=""
 awsKey=""
 awsIAMRole=""
@@ -80,6 +81,13 @@ for argument in "$@"; do
     "--debug")
       mode="debug"
       ;;
+    "--throttle")
+      nextArgumentIndex=$((argumentIndex + 2))
+      throttle="${!nextArgumentIndex}"
+      if [[ $throttle != "server" && $throttle != "client" ]]; then
+        showError "Invalid throttling mode [$throttle]"
+      fi
+      ;;
     "--build")
       newBuild=1
       ;;
@@ -137,10 +145,10 @@ for duration in "${shaperDurations[@]}"; do
 done
 
 if [[ $durationOfExperiment -gt 596000 ]]; then
-  showError "Maximum duration of each experiment can not be more than current test video length (09:56)"
+  showError "Maximum duration of each experiment can not be more than test asset length (09:56)"
 fi
 
-showMessage "Running $experiments experiment(s) in $mode mode on the following players for ${durationOfExperiment}ms each"
+showMessage "Running $experiments experiment(s) in $mode mode by $throttle throttling on the following players for ${durationOfExperiment}ms each"
 printf '%s ' "${players[@]}"
 printf "\n"
 
@@ -150,10 +158,20 @@ if [[ $newBuild == 1 ]]; then
 fi
 
 if [[ $awsProfile != "" ]]; then
+  serverInstanceType=""
+  clientInstanceType=""
+  if [[ $throttle == "server" ]]; then
+    serverInstanceType="t3a.large" # 2cpu 8ram
+    clientInstanceType="t3a.small" # 2cpu 2ram
+  else
+    serverInstanceType="t3a.small" # 2cpu 2ram
+    clientInstanceType="t3a.large" # 2cpu 8ram
+  fi
+
   showMessage "Spining up server EC2 instance"
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
-    --instance-type t2.small \
+    --instance-type $serverInstanceType \
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \
@@ -168,7 +186,7 @@ if [[ $awsProfile != "" ]]; then
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
     --count ${#players[@]} \
-    --instance-type t2.micro \
+    --instance-type $clientInstanceType \
     --key-name $awsKey \
     --iam-instance-profile Name=$awsIAMRole \
     --security-groups $awsSecurityGroup \
@@ -195,9 +213,11 @@ if [[ $awsProfile != "" ]]; then
   serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
   serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
   serverURL="http://$serverPrivateIp/"
-  configSkeleton=$(cat aws/client/configSkeleton.json)
+  configSkeleton=$(cat aws/configSkeleton.json)
+
   config="${configSkeleton/--id--/$id}"
   config="${config/--mode--/$mode}"
+  config="${config/--throttle--/$throttle}"
   config="${config/--baseURL--/$baseURL}"
   config="${config/--alk--/$analyticsLicenseKey}"
   config="${config/--mpdURL--/$serverURL$mpdName}"
