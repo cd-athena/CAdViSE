@@ -33,7 +33,7 @@ $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 
 #### Running on AWS cloud
 ```
-$ sudo ./run.sh --debug --players bitmovin --shaper network.json --awsProfile default --awsKey ppt-key --awsIAMRole SSMEnabled --awsSecurityGroup ppt-security-group
+$ sudo ./run.sh --debug --throttle server --players bitmovin --shaper network.json --awsProfile default --awsKey ppt-key --awsIAMRole SSMEnabled --awsSecurityGroup ppt-security-group
 ```
 Setup AWS CLI on your local machine following the provided guideline, you would need to have the "Access keys" from your
 IAM user.
@@ -74,8 +74,5 @@ Connection to 18.185.139.47 port 22 [tcp/ssh] succeeded!
 ```
 $ docker build --no-cache --tag babakt/ppt-server:latest .
 $ docker push babakt/ppt-server:latest
-```
-
-```
 $ sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
 ```
