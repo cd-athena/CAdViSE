@@ -3,7 +3,6 @@
 config=$(cat /home/ec2-user/config.json)
 throttle=$(echo "$config" | jq -r '.throttle')
 id=$(echo "$config" | jq -r '.id')
-baseURL=$(echo "$config" | jq -r '.baseURL')
 alk=$(echo "$config" | jq -r '.alk')
 mpdURL=$(echo "$config" | jq -r '.mpdURL')
 duration=$(($(echo "$config" | jq -r '.experimentDuration') / 1000))
@@ -11,7 +10,7 @@ mode=$(echo "$config" | jq -r '.mode')
 player=$(echo "$config" | jq -r '.player')
 
 if [[ $throttle == "server" ]]; then
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/ppt/ppt.py "http://localhost/$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
   sleep $((duration))
 else
   durations=($(echo "$config" | jq -r '.shapes[].duration'))
@@ -22,7 +21,7 @@ else
   packetCorruptions=($(echo "$config" | jq -r '.shapes[].packetCorruption'))
 
   sudo docker exec "docker-tc" curl -sd"rate=${bandwidths[0]}kbit&delay=${delays[0]}ms&loss=${packetLosses[0]}%&duplicate=${packetDuplicates[0]}%&corrupt=${packetCorruptions[0]}%" "localhost:4080/ppt-$mode-$player"
-  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
+  sudo docker exec -d "ppt-$mode-$player" python /home/seluser/ppt/ppt.py "http://localhost/$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$alk" "$duration" "$mode"
   sleep $((durations[0] / 1000))
 
   shaperIndex=1

@@ -8,10 +8,10 @@ mode=$(echo "$config" | jq -r '.mode')
 throttle=$(echo "$config" | jq -r '.throttle')
 player=$(echo "$config" | jq -r '.player')
 
-sudo docker pull babakt/ppt-"$mode":latest &>/dev/null
+sudo docker pull babakt/ppt2-"$mode":latest &>/dev/null
 
 if [[ $throttle == "server" ]]; then
-  sudo docker run --rm -d --name "ppt-$mode-$player" -p 5900:5900 -v /dev/shm:/dev/shm babakt/ppt-"$mode"
+  sudo docker run --rm -d --name "ppt-$mode-$player" -p 5900:5900 -v /dev/shm:/dev/shm babakt/ppt2-"$mode"
 else
   sudo docker network create ppt-net
 
@@ -32,7 +32,9 @@ else
     --label "com.docker-tc.loss=${packetLosses[0]}%" \
     --label "com.docker-tc.duplicate=${packetDuplicates[0]}%" \
     --label "com.docker-tc.corrupt=${packetCorruptions[0]}%" \
-    -v /dev/shm:/dev/shm babakt/ppt-"$mode"
+    -v /dev/shm:/dev/shm babakt/ppt2-"$mode"
 fi
+
+sudo docker exec -d "ppt-$mode-$player" sudo npm start
 
 exit 0

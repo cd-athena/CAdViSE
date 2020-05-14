@@ -3,7 +3,6 @@
   "mode": "--mode--",
   "throttle": "--throttle--",
   "player": "--player--",
-  "baseURL": "--baseURL--",
   "alk": "--alk--",
   "mpdURL": "--mpdURL--",
   "experimentDuration": "--experimentDuration--",

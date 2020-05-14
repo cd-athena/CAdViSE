@@ -3,7 +3,6 @@
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
 mode="production"
-baseURL="http://ppt-players.s3-website.eu-central-1.amazonaws.com/"
 players=("bitmovin" "dashjs" "shaka")
 experiments=1
 shaperDurations=(15000)     #ms
@@ -168,7 +167,7 @@ if [[ $awsProfile != "" ]]; then
     clientInstanceType="t3a.large" # 2cpu 8ram
   fi
 
-  showMessage "Spining up server EC2 instance"
+  showMessage "Spinning up server EC2 instance"
   aws ec2 run-instances \
     --image-id ami-0ab838eeee7f316eb \
     --instance-type $serverInstanceType \
@@ -213,12 +212,11 @@ if [[ $awsProfile != "" ]]; then
   serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
   serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
   serverURL="http://$serverPrivateIp/"
-  configSkeleton=$(cat aws/configSkeleton.json)
+  configSkeleton=$(cat configSkeleton.json)
 
   config="${configSkeleton/--id--/$id}"
   config="${config/--mode--/$mode}"
   config="${config/--throttle--/$throttle}"
-  config="${config/--baseURL--/$baseURL}"
   config="${config/--alk--/$analyticsLicenseKey}"
   config="${config/--mpdURL--/$serverURL$mpdName}"
   config="${config/--experimentDuration--/$durationOfExperiment}"
@@ -249,7 +247,7 @@ if [[ $awsProfile != "" ]]; then
     done
 
     showMessage "Injecting scripts and configurations into client instance"
-    scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/client/init.sh aws/client/start.sh config.json ec2-user@"$publicIp":/home/ec2-user
+    scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" client/init.sh client/start.sh config.json ec2-user@"$publicIp":/home/ec2-user
 
     ((playerIndex++))
   done
@@ -260,7 +258,7 @@ if [[ $awsProfile != "" ]]; then
   done
 
   showMessage "Injecting scripts and configurations into server instance"
-  scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/server/init.sh aws/server/start.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
+  scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" server/init.sh server/start.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
   rm -f "config.json"
 
   showMessage "Executing initializer script(s)"
@@ -365,7 +363,7 @@ else
     showMessage "Running the tests with selenium for the next ${shaperDurations[0]}ms in experiment $currentExperiment"
     echo "Set rate=${shaperBandwidths[0]}kbit, delay=${shaperDelays[0]}ms, loss=${shaperPacketLosses[0]}%, duplicate=${shaperPacketDuplicates[0]}%, corrupt=${shaperPacketCorruptions[0]}%"
     for player in "${players[@]}"; do
-      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$serverURL$mpdName&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
+      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/ppt/ppt.py "http://localhost/$player/?id=$id&mode=$mode&mpdURL=$serverURL$mpdName&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
     done
 
     sleep $((shaperDurations / 1000))
