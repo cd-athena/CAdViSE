@@ -1,6 +1,5 @@
 ### Adaptive Streaming Players Performance Testbed
-This is based on https://github.com/ValBr11/docker-evaluation-players
-- Works with multi players
+- Evaluates multi players
 - Execute experiments on AWS cloud 
 - Configurable network attributes are
     - `availableBandwidth` (kbit)
@@ -75,4 +74,5 @@ Connection to 18.185.139.47 port 22 [tcp/ssh] succeeded!
 $ docker build --no-cache --tag babakt/ppt-server:latest .
 $ docker push babakt/ppt-server:latest
 $ sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
+$ docker rm $(docker ps -aq) && docker rmi $(docker images -q)
 ```
