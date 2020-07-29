@@ -15,6 +15,7 @@ newBuild=0
 id=$(python -c 'import time; print time.time()' | cut -c1-10)
 throttle="client"
 awsProfile=""
+placementGroup=""
 awsKey=""
 awsIAMRole=""
 awsSecurityGroup=""
@@ -82,6 +83,10 @@ for argument in "$@"; do
       ;;
     "--debug")
       mode="debug"
+      ;;
+    "--cluster")
+      nextArgumentIndex=$((argumentIndex + 2))
+      placementGroup="${!nextArgumentIndex}"
       ;;
     "--throttle")
       nextArgumentIndex=$((argumentIndex + 2))
@@ -162,11 +167,11 @@ fi
 serverInstanceType=""
 clientInstanceType=""
 if [[ $throttle == "server" ]]; then
-  serverInstanceType="t3a.large" # 2cpu 8ram
-  clientInstanceType="t3a.small" # 2cpu 2ram
+  serverInstanceType="m5ad.large"
+  clientInstanceType="m5ad.large"
 else
-  serverInstanceType="t3a.small" # 2cpu 2ram
-  clientInstanceType="t3a.large" # 2cpu 8ram
+  serverInstanceType="m5ad.large"
+  clientInstanceType="m5ad.large"
 fi
 
 showMessage "Spinning up server EC2 instance"
@@ -174,6 +179,7 @@ aws ec2 run-instances \
   --image-id ami-0ab838eeee7f316eb \
   --instance-type $serverInstanceType \
   --key-name $awsKey \
+  --placement "GroupName = $placementGroup" \
   --iam-instance-profile Name=$awsIAMRole \
   --security-groups $awsSecurityGroup \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-server-$id}]" \
@@ -189,6 +195,7 @@ aws ec2 run-instances \
   --count ${#players[@]} \
   --instance-type $clientInstanceType \
   --key-name $awsKey \
+  --placement "GroupName = $placementGroup" \
   --iam-instance-profile Name=$awsIAMRole \
   --security-groups $awsSecurityGroup \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-client-$id}]" \
@@ -222,16 +229,24 @@ config="${config/--throttle--/$throttle}"
 config="${config/--alk--/$analyticsLicenseKey}"
 config="${config/--mpdURL--/$serverURL$mpdName}"
 config="${config/--experimentDuration--/$durationOfExperiment}"
-if [[ $networkConfig == "" ]]; then
-  networkConfig="{
-      \"duration\": ${shaperDurations[0]},
-      \"availableBandwidth\": ${shaperBandwidths[0]},
-      \"latency\": ${shaperDelays[0]},
-      \"packetLoss\": ${shaperPacketLosses[0]},
-      \"packetDuplicate\": ${shaperPacketDuplicates[0]},
-      \"packetCorruption\": ${shaperPacketCorruptions[0]}
+
+shaperIndex=0
+networkConfig=""
+while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
+  if [[ $networkConfig != "" ]]; then
+    networkConfig+=","
+  fi
+  networkConfig+="{
+      \"duration\": ${shaperDurations[shaperIndex]},
+      \"availableBandwidth\": ${shaperBandwidths[shaperIndex]},
+      \"latency\": ${shaperDelays[shaperIndex]},
+      \"packetLoss\": ${shaperPacketLosses[shaperIndex]},
+      \"packetDuplicate\": ${shaperPacketDuplicates[shaperIndex]},
+      \"packetCorruption\": ${shaperPacketCorruptions[shaperIndex]}
     }"
-fi
+  ((shaperIndex++))
+done
+networkConfig="[${networkConfig}]"
 config="${config/\"--shapes--\"/$networkConfig}"
 
 playerIndex=0
