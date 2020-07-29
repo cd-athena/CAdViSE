@@ -1,0 +1,18 @@
+{
+  "name": "ppt-server",
+  "version": "1.0.0",
+  "description": "Serves the dataset",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && exit 0"
+  },
+  "author": "Babak T (babak@itec.aau.at)",
+  "license": "ISC",
+  "repository": "https://github.com/cd-athena/ppt",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "standard": "^14.3.1"
+  }
+}

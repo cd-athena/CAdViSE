@@ -1,0 +1,19 @@
+{
+  "name": "ppt-client",
+  "version": "1.0.0",
+  "description": "Serves the players",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "standard && exit 0"
+  },
+  "author": "Babak T (babak@itec.aau.at)",
+  "license": "ISC",
+  "repository": "https://github.com/cd-athena/ppt",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "standard": "^14.3.1"
+  }
+}

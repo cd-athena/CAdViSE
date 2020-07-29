@@ -3,7 +3,6 @@
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
 mode="production"
-baseURL="http://ppt-players.s3-website.eu-central-1.amazonaws.com/"
 players=("bitmovin" "dashjs" "shaka")
 experiments=1
 shaperDurations=(15000)     #ms
@@ -14,14 +13,21 @@ shaperPacketDuplicates=(0)  #percentage
 shaperPacketCorruptions=(0) #percentage
 newBuild=0
 id=$(python -c 'import time; print time.time()' | cut -c1-10)
+throttle="client"
 awsProfile=""
+placementGroup=""
 awsKey=""
 awsIAMRole=""
 awsSecurityGroup=""
-instanceIds=""
+serverInstanceId=""
+clientInstanceIds=""
 networkConfig=""
-analyticsLicenseKey=""
-mpdURL=""
+analyticsLicenseKey="a014a94a-489a-4abf-813f-f47303c3912a"
+bitmovinAPIKey="fedf52cb-fab0-4754-93c1-7910a54feca4"
+serverURL=""
+mpdName="4sec/manifest.mpd"
+startTime=""
+endTime=""
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -39,7 +45,7 @@ showMessage() {
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
     showMessage "Killing EC2 instances"
-    aws ec2 terminate-instances --instance-ids $instanceIds --profile $awsProfile &>/dev/null
+    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -77,6 +83,17 @@ for argument in "$@"; do
       ;;
     "--debug")
       mode="debug"
+      ;;
+    "--cluster")
+      nextArgumentIndex=$((argumentIndex + 2))
+      placementGroup="${!nextArgumentIndex}"
+      ;;
+    "--throttle")
+      nextArgumentIndex=$((argumentIndex + 2))
+      throttle="${!nextArgumentIndex}"
+      if [[ $throttle != "server" && $throttle != "client" ]]; then
+        showError "Invalid throttling mode [$throttle]"
+      fi
       ;;
     "--build")
       newBuild=1
@@ -135,188 +152,233 @@ for duration in "${shaperDurations[@]}"; do
 done
 
 if [[ $durationOfExperiment -gt 596000 ]]; then
-  showError "Maximum duration of each experiment can not be more than current test video length (09:56)"
+  showError "Maximum duration of each experiment can not be more than test asset length (09:56)"
 fi
 
-showMessage "Running $experiments experiment(s) in $mode mode on the following players for ${durationOfExperiment}ms each"
+showMessage "Running $experiments experiment(s) in $mode mode by $throttle throttling on the following players for ${durationOfExperiment}ms each"
 printf '%s ' "${players[@]}"
 printf "\n"
 
 if [[ $newBuild == 1 ]]; then
   showMessage "Building ppt-$mode docker image"
-  docker build --network=host --no-cache --rm=true --file ppt-$mode.docker --tag babakt/ppt-$mode .
+  docker build --network=host --no-cache --file ppt-$mode.docker --tag babakt/ppt-$mode .
 fi
 
-if [[ $awsProfile != "" ]]; then
-  showMessage "Spinning up EC2 instance(s)"
+serverInstanceType=""
+clientInstanceType=""
+if [[ $throttle == "server" ]]; then
+  serverInstanceType="m5ad.large"
+  clientInstanceType="m5ad.large"
+else
+  serverInstanceType="m5ad.large"
+  clientInstanceType="m5ad.large"
+fi
 
-  aws ec2 run-instances \
-    --image-id ami-0ab838eeee7f316eb \
-    --count ${#players[@]} \
-    --instance-type t2.medium \
-    --key-name $awsKey \
-    --iam-instance-profile Name=$awsIAMRole \
-    --security-groups $awsSecurityGroup \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-$id}]" \
-    --profile $awsProfile >instances.json || showError "Failed to run the aws command. Check your aws credentials."
+showMessage "Spinning up server EC2 instance"
+aws ec2 run-instances \
+  --image-id ami-0ab838eeee7f316eb \
+  --instance-type $serverInstanceType \
+  --key-name $awsKey \
+  --placement "GroupName = $placementGroup" \
+  --iam-instance-profile Name=$awsIAMRole \
+  --security-groups $awsSecurityGroup \
+  --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-server-$id}]" \
+  --profile $awsProfile >instance.json || showError "Failed to run the aws command. Check your aws credentials."
 
-  instanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
-  printf '%s ' "${instanceIds[@]}"
-  printf "\n"
+serverInstanceId=$(jq -r '.Instances[].InstanceId' <instance.json)
+printf '%s ' "${serverInstanceId[@]}"
+printf "\n"
 
-  stateCodes=0
-  while [ $stateCodes == 0 ] || [ $(($stateCodesSum / ${#stateCodes[@]})) != 16 ]; do
-    stateCodesSum=0
-    sleep 3
-    stateCodes=($(aws ec2 describe-instances --instance-ids $instanceIds --profile $awsProfile | jq '.Reservations[].Instances[].State.Code'))
-    for stateCode in "${stateCodes[@]}"; do
-      ((stateCodesSum += stateCode))
-    done
+showMessage "Spinning up client EC2 instance(s)"
+aws ec2 run-instances \
+  --image-id ami-0ab838eeee7f316eb \
+  --count ${#players[@]} \
+  --instance-type $clientInstanceType \
+  --key-name $awsKey \
+  --placement "GroupName = $placementGroup" \
+  --iam-instance-profile Name=$awsIAMRole \
+  --security-groups $awsSecurityGroup \
+  --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-client-$id}]" \
+  --profile $awsProfile >instances.json || showError "Failed to run the aws command. Check your aws credentials."
+
+clientInstanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
+printf '%s ' "${clientInstanceIds[@]}"
+printf "\n"
+
+showMessage "Waiting for instances to be in running state"
+stateCodes=0
+while [ $stateCodes == 0 ] || [ $(($stateCodesSum / ${#stateCodes[@]})) != 16 ]; do
+  stateCodesSum=0
+  sleep 3
+  stateCodes=($(aws ec2 describe-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile | jq '.Reservations[].Instances[].State.Code'))
+  for stateCode in "${stateCodes[@]}"; do
+    ((stateCodesSum += stateCode))
   done
+done
+echo "all up [$stateCodesSum]"
 
-  publicIps=($(aws ec2 describe-instances --instance-ids $instanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
+clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
+serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
+serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
+serverURL="http://$serverPrivateIp/"
+configSkeleton=$(cat configSkeleton.json)
 
-  configSkeleton=$(cat aws/configSkeleton.json)
-  config="${configSkeleton/--id--/$id}"
-  config="${config/--mode--/$mode}"
-  config="${config/--baseURL--/$baseURL}"
-  config="${config/--alk--/$analyticsLicenseKey}"
-  config="${config/--mpdURL--/$mpdURL}"
-  config="${config/--experimentDuration--/$durationOfExperiment}"
-  if [[ $networkConfig == "" ]]; then
-    networkConfig="{
-      \"duration\": ${shaperDurations[0]},
-      \"availableBandwidth\": ${shaperBandwidths[0]},
-      \"latency\": ${shaperDelays[0]},
-      \"packetLoss\": ${shaperPacketLosses[0]},
-      \"packetDuplicate\": ${shaperPacketDuplicates[0]},
-      \"packetCorruption\": ${shaperPacketCorruptions[0]}
-    }"
+config="${configSkeleton/--id--/$id}"
+config="${config/--mode--/$mode}"
+config="${config/--throttle--/$throttle}"
+config="${config/--alk--/$analyticsLicenseKey}"
+config="${config/--mpdURL--/$serverURL$mpdName}"
+config="${config/--experimentDuration--/$durationOfExperiment}"
+
+shaperIndex=0
+networkConfig=""
+while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
+  if [[ $networkConfig != "" ]]; then
+    networkConfig+=","
   fi
-  config="${config/\"--shapes--\"/$networkConfig}"
+  networkConfig+="{
+      \"duration\": ${shaperDurations[shaperIndex]},
+      \"availableBandwidth\": ${shaperBandwidths[shaperIndex]},
+      \"latency\": ${shaperDelays[shaperIndex]},
+      \"packetLoss\": ${shaperPacketLosses[shaperIndex]},
+      \"packetDuplicate\": ${shaperPacketDuplicates[shaperIndex]},
+      \"packetCorruption\": ${shaperPacketCorruptions[shaperIndex]}
+    }"
+  ((shaperIndex++))
+done
+networkConfig="[${networkConfig}]"
+config="${config/\"--shapes--\"/$networkConfig}"
 
-  playerIndex=0
-  for publicIp in "${publicIps[@]}"; do
-    if [[ $playerIndex == 0 ]]; then
-      config="${config/--player--/${players[playerIndex]}}"
-    else
-      config="${config/${players[playerIndex - 1]}/${players[playerIndex]}}"
-    fi
-    echo "$config" >"aws/config.json"
+playerIndex=0
+for publicIp in "${clientPublicIps[@]}"; do
+  if [[ $playerIndex == 0 ]]; then
+    config="${config/--player--/${players[playerIndex]}}"
+  else
+    config="${config/${players[playerIndex - 1]}/${players[playerIndex]}}"
+  fi
+  echo "$config" >"config.json"
 
-    showMessage "Waiting for network interface to be reachable [${players[playerIndex]}]"
-    while ! nc -w5 -z "$publicIp" 22; do
-      sleep 1
-    done
-
-    showMessage "Injecting scripts and configurations into instance"
-    scp -oStrictHostKeyChecking=no -i "./aws/$awsKey.pem" aws/init.sh aws/start.sh aws/config.json ec2-user@"$publicIp":/home/ec2-user
-    rm -f "aws/config.json"
-
-    ((playerIndex++))
+  showMessage "Waiting for client network interface to be reachable [${players[playerIndex]}]"
+  while ! nc -w5 -z "$publicIp" 22; do
+    sleep 1
   done
 
-  showMessage "Executing initializer script(s)"
+  showMessage "Injecting scripts and configurations into client instance"
+  scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" client/init.sh client/start.sh config.json ec2-user@"$publicIp":/home/ec2-user
+
+  ((playerIndex++))
+done
+
+showMessage "Waiting for server network interface to be reachable"
+while ! nc -w5 -z "$serverPublicIp" 22; do
+  sleep 1
+done
+
+showMessage "Injecting scripts and configurations into server instance"
+scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" server/init.sh server/start.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
+rm -f "config.json"
+
+showMessage "Executing initializer script(s)"
+SSMCommandId=$(aws ssm send-command \
+  --instance-ids $clientInstanceIds $serverInstanceId \
+  --document-name "AWS-RunShellScript" \
+  --comment "Initialize" \
+  --parameters commands="/home/ec2-user/init.sh" \
+  --output-s3-bucket-name "ppt-output" \
+  --output-s3-key-prefix "init-out/$id" \
+  --query "Command.CommandId" \
+  --profile $awsProfile | sed -e 's/^"//' -e 's/"$//')
+
+echo "$SSMCommandId"
+
+SSMCommandResult="InProgress"
+timer=0
+while [[ $SSMCommandResult == *"InProgress"* ]]; do
+  minutes=$((timer / 60))
+  seconds=$((timer % 60))
+  printf '\r%s' "~ $minutes:$seconds  "
+  if [ $((timer % 5)) == 0 ]; then
+    SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+    sleep 0.4
+  else
+    sleep 1
+  fi
+  ((timer += 1))
+done
+printf "\n"
+
+if [[ $SSMCommandResult == *"Failed"* ]]; then
+  showError "Failed to initiate the instance(s). Check the S3 bucket for details"
+fi
+
+currentExperiment=0
+startTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+while [ $currentExperiment -lt $experiments ]; do
+  ((currentExperiment++))
+
+  showMessage "Running experiment $currentExperiment of $experiments"
   SSMCommandId=$(aws ssm send-command \
-    --instance-ids $instanceIds \
+    --instance-ids $clientInstanceIds $serverInstanceId \
     --document-name "AWS-RunShellScript" \
-    --comment "Initialize" \
-    --parameters commands="/home/ec2-user/init.sh" \
+    --comment "Start" \
+    --parameters commands="/home/ec2-user/start.sh" \
     --output-s3-bucket-name "ppt-output" \
-    --output-s3-key-prefix "init-out/$id" \
+    --output-s3-key-prefix "start-out/$id" \
     --query "Command.CommandId" \
     --profile $awsProfile | sed -e 's/^"//' -e 's/"$//')
 
   echo "$SSMCommandId"
 
   SSMCommandResult="InProgress"
+  time=$durationOfExperiment/1000
+  timer=$time
   while [[ $SSMCommandResult == *"InProgress"* ]]; do
-    sleep 5
-    SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+    minutes=$((timer / 60))
+    seconds=$((timer % 60))
+    printf '\r%s' "~ $minutes:$seconds  "
+    if [ $((timer % 30)) == 0 ] || [[ $((time - timer)) -gt $time ]]; then
+      SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
+      sleep 0.4
+    else
+      sleep 1
+    fi
+    ((timer -= 1))
   done
-  echo "$SSMCommandResult"
+  printf "\n"
 
   if [[ $SSMCommandResult == *"Failed"* ]]; then
-    showError "Failed to initiate the instance(s). Check the S3 bucket for details"
+    showError "Failed to run experiment(s). Check the S3 bucket for details"
   fi
+done
 
-  currentExperiment=0
-  while [ $currentExperiment -lt $experiments ]; do
-    ((currentExperiment++))
+#ppt-analytics-ext-id
+endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 
-    showMessage "Executing start script(s) for experiment $currentExperiment"
-    SSMCommandId=$(aws ssm send-command \
-      --instance-ids $instanceIds \
-      --document-name "AWS-RunShellScript" \
-      --comment "Start" \
-      --parameters commands="/home/ec2-user/start.sh" \
-      --output-s3-bucket-name "ppt-output" \
-      --output-s3-key-prefix "start-out/$id" \
-      --query "Command.CommandId" \
-      --profile $awsProfile | sed -e 's/^"//' -e 's/"$//')
+showMessage $startTime
+showMessage $endTime
 
-    echo "$SSMCommandId"
-
-    SSMCommandResult="InProgress"
-    while [[ $SSMCommandResult == *"InProgress"* ]]; do
-      sleep 5
-      SSMCommandResult=$(aws ssm list-command-invocations --command-id $SSMCommandId --profile $awsProfile | jq -r '.CommandInvocations[].Status')
-    done
-    echo "$SSMCommandResult"
-
-    if [[ $SSMCommandResult == *"Failed"* ]]; then
-      showError "Failed to start the experiment(s). Check the S3 bucket for details"
-    fi
-
-  done
-
+showMessage "Requesting the analytics data"
+requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
+  -H 'Content-Type: application/json' \
+  -H 'X-Api-Key: '$bitmovinAPIKey \
+  -d '{
+        "startTime": "'$startTime'",
+        "endTime": "'$endTime'",
+        "name": "ppt-analytics-request-'$id'",
+        "licenseKey": "'$analyticsLicenseKey'",
+        "output": {
+          "outputPath": "analytics/'$id'/",
+          "outputId": "25250e48-1cb2-4d4c-bf11-4b03d6096395"
+        }
+      }')
+requestStatus=$(echo "$requestResult" | jq -r '.status')
+taskId=$(echo "$requestResult" | jq -r '.data.result.id')
+taskStatus=$(echo "$requestResult" | jq -r '.data.result.status')
+if [ $taskStatus == 'ERROR' ] || [ $requestStatus == 'ERROR' ]; then
+  showError 'Failed to request the analytics data'
+  echo $requestResult
 else
-  showMessage "Creating docker network"
-  sudo docker network create ppt-net || (sudo docker network rm ppt-net && sudo docker network create ppt-net) || showError "Failed to create docker network"
-
-  showMessage "Containerizing traffic control image"
-  sudo docker run -d --name docker-tc --network host --cap-add NET_ADMIN -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/docker-tc:/tmp/docker-tc lukaszlach/docker-tc || showError "Failed to containerize the traffic control image"
-
-  vncPort=5900
-  for player in "${players[@]}"; do
-    showMessage "Containerizing the ppt-$mode image for $player player"
-    sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p $vncPort:5900 \
-      --label "com.docker-tc.enabled=1" \
-      --label "com.docker-tc.limit=${shaperBandwidths[0]}kbit" \
-      --label "com.docker-tc.delay=${shaperDelays[0]}ms" \
-      --label "com.docker-tc.loss=${shaperPacketLosses[0]}%" \
-      --label "com.docker-tc.duplicate=${shaperPacketDuplicates[0]}%" \
-      --label "com.docker-tc.corrupt=${shaperPacketCorruptions[0]}%" \
-      -v /dev/shm:/dev/shm babakt/ppt-$mode || showError "Failed to run docker command, maybe build again with --build?"
-
-    ((vncPort++))
-  done
-
-  currentExperiment=0
-  while [ $currentExperiment -lt $experiments ]; do
-    ((currentExperiment++))
-
-    showMessage "Running the tests with selenium for the next ${shaperDurations[0]}ms in experiment $currentExperiment"
-    echo "Set rate=${shaperBandwidths[0]}kbit, delay=${shaperDelays[0]}ms, loss=${shaperPacketLosses[0]}%, duplicate=${shaperPacketDuplicates[0]}%, corrupt=${shaperPacketCorruptions[0]}%"
-    for player in "${players[@]}"; do
-      sudo docker exec -d "ppt-$mode-$player" python /home/seluser/scripts/ppt.py "$baseURL$player/?id=$id&mode=$mode&mpdURL=$mpdURL&alk=$analyticsLicenseKey" "$durationOfExperiment" $mode
-    done
-
-    sleep $((shaperDurations / 1000))
-
-    shaperIndex=1
-    while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
-      showMessage "Reshaping the network for the next ${shaperDurations[$shaperIndex]}ms in experiment $currentExperiment"
-      echo "Set rate=${shaperBandwidths[$shaperIndex]}kbit, delay=${shaperDelays[$shaperIndex]}ms, loss=${shaperPacketLosses[$shaperIndex]}%, duplicate=${shaperPacketDuplicates[$shaperIndex]}%, corrupt=${shaperPacketCorruptions[$shaperIndex]}%"
-
-      for player in "${players[@]}"; do
-        sudo docker exec "docker-tc" curl -sd"rate=${shaperBandwidths[$shaperIndex]}kbit&delay=${shaperDelays[$shaperIndex]}ms&loss=${shaperPacketLosses[$shaperIndex]}%&duplicate=${shaperPacketDuplicates[$shaperIndex]}%&corrupt=${shaperPacketCorruptions[$shaperIndex]}%" "localhost:4080/ppt-$mode-$player" &>/dev/null
-      done
-
-      sleep $((shaperDurations[shaperIndex] / 1000))
-      ((shaperIndex++))
-    done
-  done
+  echo $taskId
 fi
 
 cleanExit 0

@@ -1,31 +1,55 @@
 [
   {
-    "duration": 10000,
-    "availableBandwidth": 14000,
-    "latency": 65,
+    "duration": 60000,
+    "availableBandwidth": 0,
+    "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 50000,
-    "latency": 100,
+    "duration": 60000,
+    "availableBandwidth": 1000,
+    "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 20100,
-    "latency": 50,
+    "duration": 60000,
+    "availableBandwidth": 0,
+    "latency": 1000,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 13100,
+    "duration": 60000,
+    "availableBandwidth": 0,
+    "latency": 0,
+    "packetLoss": 40,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 60000,
+    "availableBandwidth": 0,
+    "latency": 0,
+    "packetLoss": 0,
+    "packetDuplicate": 40,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 60000,
+    "availableBandwidth": 0,
+    "latency": 0,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 40
+  },
+  {
+    "duration": 60000,
+    "availableBandwidth": 0,
     "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,
