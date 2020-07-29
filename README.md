@@ -32,7 +32,7 @@ $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 
 #### Running on AWS cloud
 ```
-$ sudo ./run.sh --debug --throttle server --players bitmovin --shaper network.json --awsProfile default --awsKey ppt-key --awsIAMRole SSMEnabled --awsSecurityGroup ppt-security-group
+$ sudo ./run.sh --debug --cluster pptCluster --throttle server --players bitmovin --shaper network.json --awsProfile default --awsKey ppt-key --awsIAMRole SSMEnabled --awsSecurityGroup ppt-security-group
 ```
 Setup AWS CLI on your local machine following the provided guideline, you would need to have the "Access keys" from your
 IAM user.
@@ -75,4 +75,10 @@ $ docker build --no-cache --tag babakt/ppt-server:latest .
 $ docker push babakt/ppt-server:latest
 $ sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
 $ docker rm $(docker ps -aq) && docker rmi $(docker images -q)
+```
+
+```
+sudo ffmpeg -f x11grab -framerate 25 -bufsize 4099900 -video_size 640x360 -i :99.0+22,143 out.mpg
+sudo docker cp er-client:/home/seluser/ppt/out.mpg .
+scp -i babak-ppt-key.pem ec2-user@ip:/home/ec2-user/out.mpg .
 ```
