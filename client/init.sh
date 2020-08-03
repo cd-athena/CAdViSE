@@ -35,6 +35,7 @@ else
     -v /dev/shm:/dev/shm babakt/ppt2-"$mode"
 fi
 
-sudo docker exec -d "ppt-$mode-$player" sudo npm start
+sudo docker cp /home/ec2-user/config.json "ppt-$mode-$player:/home/seluser/ppt/config.json"
+sudo docker exec -d "ppt-$mode-$player" sudo pm2 start index.js
 
 exit 0

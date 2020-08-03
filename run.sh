@@ -220,14 +220,15 @@ echo "all up [$stateCodesSum]"
 clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
-serverURL="http://$serverPrivateIp/"
+#serverURL="http://$serverPrivateIp/"
 configSkeleton=$(cat configSkeleton.json)
 
 config="${configSkeleton/--id--/$id}"
 config="${config/--mode--/$mode}"
 config="${config/--throttle--/$throttle}"
 config="${config/--alk--/$analyticsLicenseKey}"
-config="${config/--mpdURL--/$serverURL$mpdName}"
+config="${config/--serverIp--/$serverPrivateIp}"
+#config="${config/--mpdURL--/$serverURL$mpdName}"
 config="${config/--experimentDuration--/$durationOfExperiment}"
 
 shaperIndex=0
@@ -353,9 +354,6 @@ done
 
 #ppt-analytics-ext-id
 endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-
-showMessage $startTime
-showMessage $endTime
 
 showMessage "Requesting the analytics data"
 requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \

@@ -71,10 +71,11 @@ Connection to 18.185.139.47 port 22 [tcp/ssh] succeeded!
 ```
 
 ```
-$ docker build --no-cache --tag babakt/ppt-server:latest .
-$ docker push babakt/ppt-server:latest
-$ sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
-$ docker rm $(docker ps -aq) && docker rmi $(docker images -q)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+docker build --no-cache --tag babakt/ppt-server:latest .
+docker push babakt/ppt-server:latest
+sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
 ```
 
 ```

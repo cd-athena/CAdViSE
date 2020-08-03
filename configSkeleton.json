@@ -4,7 +4,7 @@
   "throttle": "--throttle--",
   "player": "--player--",
   "alk": "--alk--",
-  "mpdURL": "--mpdURL--",
+  "serverIp": "--serverIp--",
   "experimentDuration": "--experimentDuration--",
   "shapes": "--shapes--"
 }

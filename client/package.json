@@ -11,7 +11,10 @@
   "license": "ISC",
   "repository": "https://github.com/cd-athena/ppt",
   "dependencies": {
-    "express": "^4.17.1"
+    "aws-sdk": "^2.723.0",
+    "axios": "^0.19.2",
+    "express": "^4.17.1",
+    "uuid": "^8.1.0"
   },
   "devDependencies": {
     "standard": "^14.3.1"
