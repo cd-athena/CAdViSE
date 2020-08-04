@@ -8,9 +8,25 @@
     "packetCorruption": 0
   },
   {
-    "duration": 180000,
-    "availableBandwidth": 0,
-    "latency": 100,
+    "duration": 120000,
+    "availableBandwidth": 100,
+    "latency": 0,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 120000,
+    "availableBandwidth": 1500,
+    "latency": 0,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 120000,
+    "availableBandwidth": 500,
+    "latency": 0,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0

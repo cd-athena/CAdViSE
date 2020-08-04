@@ -12,7 +12,7 @@ shaperPacketLosses=(0)      #percentage
 shaperPacketDuplicates=(0)  #percentage
 shaperPacketCorruptions=(0) #percentage
 newBuild=0
-id=$(python -c 'import time; print time.time()' | cut -c1-10)
+id=$(date '+%s')
 throttle="client"
 awsProfile=""
 placementGroup=""
@@ -32,14 +32,14 @@ endTime=""
 
 ########################### functions ############################
 showError() {
-  now=$(python -c 'import time; print time.time()')
-  printf "\e[1;31m>>> [ERROR %.2f] %s\e[0m\n" "$now" "$1"
+  now=$(date -u +"%H:%M:%S")
+  printf "\e[1;31m>>> [ERROR %s] %s\e[0m\n" "$now" "$1"
   cleanExit 1
 }
 
 showMessage() {
-  now=$(python -c 'import time; print time.time()')
-  printf "\n\e[1;36m>>> [INFO %.2f] %s\e[0m\n" "$now" "$1"
+  now=$(date -u +"%H:%M:%S")
+  printf "\n\e[1;36m>>> [INFO %s] %s\e[0m\n" "$now" "$1"
 }
 
 cleanExit() {
@@ -220,7 +220,6 @@ echo "all up [$stateCodesSum]"
 clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
-#serverURL="http://$serverPrivateIp/"
 configSkeleton=$(cat configSkeleton.json)
 
 config="${configSkeleton/--id--/$id}"
@@ -228,7 +227,6 @@ config="${config/--mode--/$mode}"
 config="${config/--throttle--/$throttle}"
 config="${config/--alk--/$analyticsLicenseKey}"
 config="${config/--serverIp--/$serverPrivateIp}"
-#config="${config/--mpdURL--/$serverURL$mpdName}"
 config="${config/--experimentDuration--/$durationOfExperiment}"
 
 shaperIndex=0

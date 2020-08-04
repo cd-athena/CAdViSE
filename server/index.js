@@ -25,6 +25,6 @@ app.get('/4sec/:filePath/:fileName', (request, response) => {
   fs.createReadStream('dataset/4sec/' + filePath + '/' + fileName).pipe(response)
 })
 
-app.listen(8080, () => {
+app.listen(80, () => {
   console.log('Listening on port 80')
 })

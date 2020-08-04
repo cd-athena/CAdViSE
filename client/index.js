@@ -6,15 +6,7 @@ AWS.config.update({ region: 'eu-central-1' })
 const dynamoDb = new AWS.DynamoDB.DocumentClient()
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid')
-let { serverIp, id } = require('./config.json')
-serverIp = 'localhost:8080'
-
-app.use((request, response, next) => {
-  response.header('Access-Control-Allow-Origin', '*')
-  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-  console.log(request.params, "here")
-  next()
-})
+const { serverIp, id } = require('./config.json')
 
 app.get('/:anything', (request, response) => {
   response.send('')
@@ -22,14 +14,14 @@ app.get('/:anything', (request, response) => {
 
 app.get('/player/:playerName', async (request, response) => {
   const { playerName } = request.params
-  await log('requesting ' + playerName)
+  await log('requesting', playerName)
   fs.createReadStream('player/' + playerName + '/index.html').pipe(response)
 })
 
 app.get('/4sec/:fileName', async (request, response) => {
   const { fileName } = request.params
   const BASEURL = 'http://' + serverIp + '/'
-  await log('requesting ' + fileName)
+  await log('requesting', fileName)
 
   axios({
     method: 'get',
@@ -43,7 +35,7 @@ app.get('/4sec/:fileName', async (request, response) => {
 app.get('/4sec/:filePath/:fileName', async (request, response) => {
   const { filePath, fileName } = request.params
   const BASEURL = 'http://' + serverIp + '/'
-  await log('requesting ' + filePath + '/' + fileName)
+  await log('requesting', filePath + '/' + fileName)
 
   axios({
     method: 'get',
@@ -56,21 +48,23 @@ app.get('/4sec/:filePath/:fileName', async (request, response) => {
 
 app.get('/log/:eventName', async (request, response) => {
   const { eventName } = request.params
-  await log(eventName)
+  await log('event', eventName)
+  response.send('')
 })
 
 app.listen(80, () => {
   console.log('Listening on port 80')
 })
 
-const log = async (event) => {
-  await dynamoDb.put({
+const log = async (action, name) => {
+  return dynamoDb.put({
     TableName: 'ppt-logs',
     Item: {
       id: uuidv4(),
       experimentId: id,
       time: new Date().toISOString(),
-      event: event
+      action,
+      name
     }
   }).promise()
 }
