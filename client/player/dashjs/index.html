@@ -6,8 +6,8 @@
     <script type="text/javascript" src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
     <style>
         video {
-            width: 640px;
-            height: 360px;
+            width: 1280px;
+            height: 720px;
         }
     </style>
 </head>
@@ -20,7 +20,6 @@
     const keyValues = window.location.search.substr(1).split('&')
     let experimentId, mode, alk
     let mpdURL = 'http://localhost/4sec/manifest.mpd'
-    // let mpdURL = 'https://content-miriam.s3.eu-central-1.amazonaws.com/dash/manifest.mpd'
     keyValues.forEach(keyValueString => {
       let keyValueArray = keyValueString.split('=')
       switch (keyValueArray[0]) {

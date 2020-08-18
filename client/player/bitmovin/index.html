@@ -7,13 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript" src="https://cdn.bitmovin.com/player/web/8/bitmovinplayer.js"></script>
     <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>
+    <style>
+        .bmpui-ui-watermark, .bmpui-ui-playbacktoggle-overlay, .bmpui-ui-hugeplaybacktogglebutton, .bmpui-ui-controlbar {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 <div id="player"></div>
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', () => {
     const keyValues = window.location.search.substr(1).split('&')
-    let experimentId, mode, alk, mpdURL
+    let experimentId, mode, alk
+
+    let mpdURL = 'http://localhost/4sec/manifest.mpd'
     keyValues.forEach(keyValueString => {
       let keyValueArray = keyValueString.split('=')
       switch (keyValueArray[0]) {
@@ -32,6 +39,7 @@
       }
     })
 
+    let xhr = new XMLHttpRequest()
     const config = {
       key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
       analytics: {
@@ -47,9 +55,20 @@
         muted: false
       },
       style: {
-        width: '640px',
-        height: '360px',
-        controls: true
+        width: '1280px',
+        height: '720px'
+      },
+      events: {
+        playing: (params) => {
+          console.log('playing event fired', JSON.stringify(params))
+          xhr.open('GET', 'http://localhost/log/playing')
+          xhr.send()
+        },
+        play: (params) => {
+          console.log('play event fired', JSON.stringify(params))
+          xhr.open('GET', 'http://localhost/log/play')
+          xhr.send()
+        },
       }
     }
 
