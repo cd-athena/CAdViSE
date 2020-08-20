@@ -42,8 +42,9 @@ showMessage() {
 
 cleanExit() {
   if [[ $awsProfile != "" ]]; then
-    showMessage "Killing EC2 instances"
+    showMessage "Killing EC2 instances and clean ups"
     aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
+    rm -rf "$id"
   else
     showMessage "Removing docker containers"
     for player in "${players[@]}"; do
@@ -143,6 +144,7 @@ done
 ########################### /arguments ############################
 
 printf "\n\e[1;33m>>> Experiment set id: $id %s\e[0m\n"
+mkdir "$id"
 
 durationOfExperiment=0
 for duration in "${shaperDurations[@]}"; do
@@ -181,9 +183,9 @@ aws ec2 run-instances \
   --iam-instance-profile Name=$awsIAMRole \
   --security-groups $awsSecurityGroup \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-server-$id}]" \
-  --profile $awsProfile >instance.json || showError "Failed to run the aws command. Check your aws credentials."
+  --profile $awsProfile >"$id/instance.json" || showError "Failed to run the aws command. Check your aws credentials."
 
-serverInstanceId=$(jq -r '.Instances[].InstanceId' <instance.json)
+serverInstanceId=$(jq -r '.Instances[].InstanceId' <"$id/instance.json")
 printf '%s ' "${serverInstanceId[@]}"
 printf "\n"
 
@@ -197,9 +199,9 @@ aws ec2 run-instances \
   --iam-instance-profile Name=$awsIAMRole \
   --security-groups $awsSecurityGroup \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=ppt-client-$id}]" \
-  --profile $awsProfile >instances.json || showError "Failed to run the aws command. Check your aws credentials."
+  --profile $awsProfile >"$id/instances.json" || showError "Failed to run the aws command. Check your aws credentials."
 
-clientInstanceIds=$(jq -r '.Instances[].InstanceId' <instances.json)
+clientInstanceIds=$(jq -r '.Instances[].InstanceId' <"$id/instances.json")
 printf '%s ' "${clientInstanceIds[@]}"
 printf "\n"
 
@@ -217,7 +219,7 @@ echo "all up [$stateCodesSum]"
 
 clientPublicIps=($(aws ec2 describe-instances --instance-ids $clientInstanceIds --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
 serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --profile $awsProfile | jq -r '.Reservations[].Instances[].PublicIpAddress'))
-serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <instance.json)
+serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <"$id/instance.json")
 configSkeleton=$(cat configSkeleton.json)
 
 config="${configSkeleton/--id--/$id}"
@@ -253,7 +255,7 @@ for publicIp in "${clientPublicIps[@]}"; do
   else
     config="${config/${players[playerIndex - 1]}/${players[playerIndex]}}"
   fi
-  echo "$config" >"config.json"
+  echo "$config" >"$id/config.json"
 
   showMessage "Waiting for client network interface to be reachable [${players[playerIndex]}]"
   while ! nc -w5 -z "$publicIp" 22; do
@@ -261,7 +263,7 @@ for publicIp in "${clientPublicIps[@]}"; do
   done
 
   showMessage "Injecting scripts and configurations into client instance"
-  scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" client/init.sh client/start.sh config.json ec2-user@"$publicIp":/home/ec2-user
+  scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" client/init.sh client/start.sh "$id/config.json" ec2-user@"$publicIp":/home/ec2-user
 
   ((playerIndex++))
 done
@@ -272,8 +274,7 @@ while ! nc -w5 -z "$serverPublicIp" 22; do
 done
 
 showMessage "Injecting scripts and configurations into server instance"
-scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" server/init.sh server/start.sh config.json ec2-user@"$serverPublicIp":/home/ec2-user
-rm -f "config.json"
+scp -oStrictHostKeyChecking=no -i "./$awsKey.pem" server/init.sh server/start.sh "$id/config.json" ec2-user@"$serverPublicIp":/home/ec2-user
 
 showMessage "Executing initializer script(s)"
 SSMCommandId=$(aws ssm send-command \
