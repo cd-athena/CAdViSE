@@ -14,56 +14,60 @@ app.get('/:anything', (request, response) => {
 
 app.get('/player/:playerName', async (request, response) => {
   const { playerName } = request.params
-  await log('requesting', playerName)
   fs.createReadStream('player/' + playerName + '/index.html').pipe(response)
 })
 
-app.get('/4sec/:fileName', async (request, response) => {
-  const { fileName } = request.params
+app.get('/dataset/:title/:fileName', async (request, response) => {
+  const { title, fileName } = request.params
+  const { playerABR } = request.query
   const BASEURL = 'http://' + serverIp + '/'
-  await log('requesting', fileName)
+  await log(playerABR, 'requesting', title, fileName)
 
   axios({
     method: 'get',
-    url: BASEURL + '4sec/' + fileName,
+    url: BASEURL + title + '/' + fileName
+  }).then((serverResponse) => {
+    const manifest = serverResponse.data.replace(/queryString/g, 'playerABR=' + playerABR)
+    response.send(manifest)
+  }).catch(console.error)
+})
+
+app.get('/dataset/:title/:filePath/:fileName', async (request, response) => {
+  const { title, filePath, fileName } = request.params
+  const { playerABR } = request.query
+  const BASEURL = 'http://' + serverIp + '/'
+  await log(playerABR, 'requesting', title, filePath + '/' + fileName)
+
+  axios({
+    method: 'get',
+    url: BASEURL + title + '/' + filePath + '/' + fileName,
     responseType: 'stream'
   }).then((serverResponse) => {
     serverResponse.data.pipe(response)
   }).catch(console.error)
 })
 
-app.get('/4sec/:filePath/:fileName', async (request, response) => {
-  const { filePath, fileName } = request.params
-  const BASEURL = 'http://' + serverIp + '/'
-  await log('requesting', filePath + '/' + fileName)
-
-  axios({
-    method: 'get',
-    url: BASEURL + '4sec/' + filePath + '/' + fileName,
-    responseType: 'stream'
-  }).then((serverResponse) => {
-    serverResponse.data.pipe(response)
-  }).catch(console.error)
-})
-
-app.get('/log/:eventName', async (request, response) => {
-  const { eventName } = request.params
-  await log('event', eventName)
-  response.send('')
+app.get('/log/:title/:eventName', async (request, response) => {
+  const { title, eventName } = request.params
+  const { playerABR } = request.query
+  await log(playerABR, 'event', title, eventName)
+  response.send('ok')
 })
 
 app.listen(80, () => {
   console.log('Listening on port 80')
 })
 
-const log = async (action, name) => {
+const log = async (playerABR, action, title, name) => {
   return dynamoDb.put({
     TableName: 'ppt-logs',
     Item: {
       id: uuidv4(),
       experimentId: id,
       time: new Date().toISOString(),
+      playerABR,
       action,
+      title,
       name
     }
   }).promise()

@@ -2,8 +2,7 @@
 
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
-mode="production"
-players=("bitmovin" "dashjs" "shaka")
+players=("bitmovin" "dashjs" "shaka" "bola")
 experiments=1
 shaperDurations=(15000)     #ms
 shaperDelays=(70)           #ms
@@ -11,21 +10,24 @@ shaperBandwidths=(5000)     #kbits
 shaperPacketLosses=(0)      #percentage
 shaperPacketDuplicates=(0)  #percentage
 shaperPacketCorruptions=(0) #percentage
-newBuild=0
 id=$(date '+%s')
 throttle="client"
-awsProfile=""
-placementGroup=""
+awsProfile="default"
+placementGroup="pptCluster"
 awsKey=""
-awsIAMRole=""
-awsSecurityGroup=""
+awsIAMRole="SSMEnabled"
+awsSecurityGroup="ppt-security-group"
 serverInstanceId=""
 clientInstanceIds=""
 networkConfig=""
 analyticsLicenseKey="a014a94a-489a-4abf-813f-f47303c3912a"
 bitmovinAPIKey="fedf52cb-fab0-4754-93c1-7910a54feca4"
+analyticsOutputId="25250e48-1cb2-4d4c-bf11-4b03d6096395"
 startTime=""
 endTime=""
+instancesType="m5ad.large"
+title="bbb"
+clientWarmupTime=2000
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -41,18 +43,9 @@ showMessage() {
 }
 
 cleanExit() {
-  if [[ $awsProfile != "" ]]; then
-    showMessage "Killing EC2 instances and clean ups"
-    aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
-    rm -rf "$id"
-  else
-    showMessage "Removing docker containers"
-    for player in "${players[@]}"; do
-      sudo docker rm -f "ppt-$mode-$player" &>/dev/null
-    done
-    sudo docker rm -f docker-tc &>/dev/null
-    sudo docker network rm ppt-net &>/dev/null
-  fi
+  showMessage "Killing EC2 instances and clean ups"
+  aws ec2 terminate-instances --instance-ids $clientInstanceIds $serverInstanceId --profile $awsProfile &>/dev/null
+  rm -rf "$id"
   exit $1
 }
 ########################### /functions ###########################
@@ -80,12 +73,13 @@ for argument in "$@"; do
       shaperPacketDuplicates=($(echo "$networkConfig" | jq '.[].packetDuplicate'))
       shaperPacketCorruptions=($(echo "$networkConfig" | jq '.[].packetCorruption'))
       ;;
-    "--debug")
-      mode="debug"
-      ;;
     "--cluster")
       nextArgumentIndex=$((argumentIndex + 2))
       placementGroup="${!nextArgumentIndex}"
+      ;;
+    "--title")
+      nextArgumentIndex=$((argumentIndex + 2))
+      title="${!nextArgumentIndex}"
       ;;
     "--throttle")
       nextArgumentIndex=$((argumentIndex + 2))
@@ -93,9 +87,6 @@ for argument in "$@"; do
       if [[ $throttle != "server" && $throttle != "client" ]]; then
         showError "Invalid throttling mode [$throttle]"
       fi
-      ;;
-    "--build")
-      newBuild=1
       ;;
     "--awsProfile")
       nextArgumentIndex=$((argumentIndex + 2))
@@ -155,29 +146,14 @@ if [[ $durationOfExperiment -gt 596000 ]]; then
   showError "Maximum duration of each experiment can not be more than test asset length (09:56)"
 fi
 
-showMessage "Running $experiments experiment(s) in $mode mode by $throttle throttling on the following players for ${durationOfExperiment}ms each"
+showMessage "Running $experiments experiment(s) by $throttle throttling on the following players for ${durationOfExperiment}ms each"
 printf '%s ' "${players[@]}"
 printf "\n"
-
-if [[ $newBuild == 1 ]]; then
-  showMessage "Building ppt-$mode docker image"
-  docker build --network=host --no-cache --file ppt-$mode.docker --tag babakt/ppt-$mode .
-fi
-
-serverInstanceType=""
-clientInstanceType=""
-if [[ $throttle == "server" ]]; then
-  serverInstanceType="m5ad.large"
-  clientInstanceType="m5ad.large"
-else
-  serverInstanceType="m5ad.large"
-  clientInstanceType="m5ad.large"
-fi
 
 showMessage "Spinning up server EC2 instance"
 aws ec2 run-instances \
   --image-id ami-0ab838eeee7f316eb \
-  --instance-type $serverInstanceType \
+  --instance-type $instancesType \
   --key-name $awsKey \
   --placement "GroupName = $placementGroup" \
   --iam-instance-profile Name=$awsIAMRole \
@@ -193,7 +169,7 @@ showMessage "Spinning up client EC2 instance(s)"
 aws ec2 run-instances \
   --image-id ami-0ab838eeee7f316eb \
   --count ${#players[@]} \
-  --instance-type $clientInstanceType \
+  --instance-type $instancesType \
   --key-name $awsKey \
   --placement "GroupName = $placementGroup" \
   --iam-instance-profile Name=$awsIAMRole \
@@ -222,27 +198,35 @@ serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --
 serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <"$id/instance.json")
 configSkeleton=$(cat configSkeleton.json)
 
+((durationOfExperiment += clientWarmupTime)) # load the player
 config="${configSkeleton/--id--/$id}"
-config="${config/--mode--/$mode}"
 config="${config/--throttle--/$throttle}"
+config="${config/--title--/$title}"
 config="${config/--alk--/$analyticsLicenseKey}"
 config="${config/--serverIp--/$serverPrivateIp}"
 config="${config/--experimentDuration--/$durationOfExperiment}"
 
 shaperIndex=0
-networkConfig=""
+networkConfig="{
+    \"duration\": ${clientWarmupTime},
+    \"availableBandwidth\": 0,
+    \"latency\": 0,
+    \"packetLoss\": 0,
+    \"packetDuplicate\": 0,
+    \"packetCorruption\": 0
+  }"
 while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
   if [[ $networkConfig != "" ]]; then
     networkConfig+=","
   fi
   networkConfig+="{
-      \"duration\": ${shaperDurations[shaperIndex]},
-      \"availableBandwidth\": ${shaperBandwidths[shaperIndex]},
-      \"latency\": ${shaperDelays[shaperIndex]},
-      \"packetLoss\": ${shaperPacketLosses[shaperIndex]},
-      \"packetDuplicate\": ${shaperPacketDuplicates[shaperIndex]},
-      \"packetCorruption\": ${shaperPacketCorruptions[shaperIndex]}
-    }"
+    \"duration\": ${shaperDurations[shaperIndex]},
+    \"availableBandwidth\": ${shaperBandwidths[shaperIndex]},
+    \"latency\": ${shaperDelays[shaperIndex]},
+    \"packetLoss\": ${shaperPacketLosses[shaperIndex]},
+    \"packetDuplicate\": ${shaperPacketDuplicates[shaperIndex]},
+    \"packetCorruption\": ${shaperPacketCorruptions[shaperIndex]}
+  }"
   ((shaperIndex++))
 done
 networkConfig="[${networkConfig}]"
@@ -314,7 +298,7 @@ startTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 while [ $currentExperiment -lt $experiments ]; do
   ((currentExperiment++))
 
-  showMessage "Running experiment $currentExperiment of $experiments"
+  showMessage "Running experiment $currentExperiment of $experiments [+$clientWarmupTime(ms) Player warmup time]"
   SSMCommandId=$(aws ssm send-command \
     --instance-ids $clientInstanceIds $serverInstanceId \
     --document-name "AWS-RunShellScript" \
@@ -363,7 +347,7 @@ requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
         "licenseKey": "'$analyticsLicenseKey'",
         "output": {
           "outputPath": "analytics/'$id'/",
-          "outputId": "25250e48-1cb2-4d4c-bf11-4b03d6096395"
+          "outputId": "'$analyticsOutputId'"
         }
       }')
 requestStatus=$(echo "$requestResult" | jq -r '.status')

@@ -34,6 +34,14 @@
     const video = document.getElementById('video')
     const time = new Date().getTime()
     const player = dashjs.MediaPlayer().create()
+    player.updateSettings({
+      'streaming': {
+        'abr': {
+          'ABRStrategy': 'abrBola'
+        }
+      }
+    })
+
     new bitmovin.analytics.adapters.DashjsAdapter({
       key: alk,
       videoId: 'ppt-test',

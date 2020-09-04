@@ -1,0 +1,146 @@
+[
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 1000,
+    "latency": 190,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  },
+  {
+    "duration": 10000,
+    "availableBandwidth": 7200,
+    "latency": 150,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  }
+]

@@ -7,64 +7,61 @@
     <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>
     <script type="text/javascript">
       const initPlayer = () => {
+        const video = document.getElementById('video')
         const keyValues = window.location.search.substr(1).split('&')
-        let experimentId, mode, alk
-        let mpdURL = 'http://localhost/4sec/manifest.mpd'
+        let experimentId, title, alk
         keyValues.forEach(keyValueString => {
           let keyValueArray = keyValueString.split('=')
           switch (keyValueArray[0]) {
             case 'id':
               experimentId = keyValueArray[1]
               break
-            case 'mode':
-              mode = keyValueArray[1]
+            case 'title':
+              title = keyValueArray[1]
               break
             case 'alk':
               alk = keyValueArray[1]
               break
-            case 'mpdURL':
-              mpdURL = keyValueArray[1]
-              break
           }
         })
 
-        const video = document.getElementById('video')
+        const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=shaka-default'
+        let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=shaka-default'
+
         const player = new shaka.Player(video)
         window.player = player
-        player.addEventListener('error', onErrorEvent)
         player.load(mpdURL).then(function () {
           new bitmovin.analytics.adapters.ShakaAdapter({
               key: alk,
               videoId: 'ppt-test',
-              title: 'BigBuckBunny_6s_simple_2014_05_09',
+              title: title,
               cdnProvider: 'EC2',
               experimentName: experimentId,
-              debug: mode
+              debug: false
             },
             player)
-        }).catch(onError)
-      }
+        }).catch((error) => {
+          console.error('Error code', error.code, 'object', error)
+        })
 
-      const onErrorEvent = (event) => {
-        onError(event.detail)
-      }
+        const events = ['loadstart', 'suspend', 'abort', 'error', 'emptied', 'stalled', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked', 'ended', 'durationchange', 'play', 'pause', 'ratechange']
+        const xhr = new XMLHttpRequest()
 
-      const onError = (error) => {
-        console.error('Error code', error.code, 'object', error)
+        events.forEach(event => {
+          video.addEventListener(event, e => {
+            xhr.open('GET', logURL.replace('%event%', e.type))
+            xhr.send()
+          })
+        })
       }
 
       document.addEventListener('DOMContentLoaded', () => {
         shaka.polyfill.installAll()
-
-        if (shaka.Player.isBrowserSupported()) {
-          initPlayer()
-        } else {
-          console.error('Browser not supported!')
-        }
+        initPlayer()
       })
     </script>
 </head>
 <body>
-<video id="video" width="1280" height="720" autoplay controls></video>
+<video id="video" width="1280" height="720" autoplay></video>
 </body>
 </html>

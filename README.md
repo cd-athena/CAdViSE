@@ -24,15 +24,13 @@
 ```
 $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 ```
-- Passing `--build` would cause the image to be built on your local machine instead of being fetched from dockerhub.
 - `--players` accepts three values `bitmovin`, `shaka` and `dashjs`
-- Omitting `--debug` would cause the test to be executed in production mode (no monitoring provided)
 - Update network simulator values such as available bandwidth in `network.json`
 - Number of experiments can be defined by `--experiments`
 
 #### Running on AWS cloud
 ```
-sudo ./run.sh --debug --cluster pptCluster --throttle server --players bitmovin --shaper network.json --awsProfile default --awsKey ppt-key --awsIAMRole SSMEnabled --awsSecurityGroup ppt-security-group
+sudo ./run.sh --throttle server --players bitmovin --title bbb --shaper network/network0.json --awsKey ppt-key
 ```
 Setup AWS CLI on your local machine following the provided guideline, you would need to have the "Access keys" from your
 IAM user.
@@ -68,19 +66,4 @@ Note that vnc service will be available only after initialization stage.
 Sample: 
 ```
 Connection to 18.185.139.47 port 22 [tcp/ssh] succeeded!
-```
-
-```
-docker rm $(docker ps -aq)
-docker rmi $(docker images -q)
-docker build --no-cache --tag babakt/ppt-server:latest .
-docker build --no-cache --tag babakt/ppt2-debug:latest .
-docker push babakt/ppt-server:latest
-sudo docker exec -it ppt-server speedometer -t eth0 -r eth0
-```
-
-```
-sudo ffmpeg -f x11grab -framerate 25 -bufsize 4099900 -video_size 640x360 -i :99.0+22,143 out.mpg
-sudo docker cp er-client:/home/seluser/ppt/out.mpg .
-scp -i babak-ppt-key.pem ec2-user@ip:/home/ec2-user/out.mpg .
 ```

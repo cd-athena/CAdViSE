@@ -6,7 +6,8 @@ WORKDIR /home/ppt
 COPY index.js /home/ppt
 COPY package.json /home/ppt
 COPY package-lock.json /home/ppt
-COPY dataset/ /home/ppt/dataset/
+RUN mkdir -p /home/ppt/dataset/
+COPY dataset/lachute /home/ppt/dataset/lachute
 RUN npm i && npm i -g pm2
 EXPOSE 80
 

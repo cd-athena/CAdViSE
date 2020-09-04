@@ -17,35 +17,32 @@
 <div id="player"></div>
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', () => {
+    let experimentId, title, alk
     const keyValues = window.location.search.substr(1).split('&')
-    let experimentId, mode, alk
-
-    let mpdURL = 'http://localhost/4sec/manifest.mpd'
     keyValues.forEach(keyValueString => {
       let keyValueArray = keyValueString.split('=')
       switch (keyValueArray[0]) {
         case 'id':
           experimentId = keyValueArray[1]
           break
-        case 'mode':
-          mode = keyValueArray[1]
+        case 'title':
+          title = keyValueArray[1]
           break
         case 'alk':
           alk = keyValueArray[1]
           break
-        case 'mpdURL':
-          mpdURL = keyValueArray[1]
-          break
       }
     })
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=bitmovin-default'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=bitmovin-default'
+    const xhr = new XMLHttpRequest()
 
-    let xhr = new XMLHttpRequest()
     const config = {
       key: '017bea3e-68e0-4aaf-a5ee-c00e6856ac3b',
       analytics: {
         key: alk,
         videoId: 'ppt-test',
-        title: 'BigBuckBunny_6s_simple_2014_05_09',
+        title: title,
         cdnProvider: 'EC2',
         experimentName: experimentId,
         debug: false
@@ -60,15 +57,21 @@
       },
       events: {
         playing: (params) => {
-          console.log('playing event fired', JSON.stringify(params))
-          xhr.open('GET', 'http://localhost/log/playing')
+          xhr.open('GET', logURL.replace('%event%', 'playing'))
           xhr.send()
         },
-        play: (params) => {
-          console.log('play event fired', JSON.stringify(params))
-          xhr.open('GET', 'http://localhost/log/play')
+        paused: (params) => {
+          xhr.open('GET', logURL.replace('%event%', 'paused'))
           xhr.send()
         },
+        stallstarted: (params) => {
+          xhr.open('GET', logURL.replace('%event%', 'stallStarted'))
+          xhr.send()
+        },
+        stallended: (params) => {
+          xhr.open('GET', logURL.replace('%event%', 'stallEnded'))
+          xhr.send()
+        }
       }
     }
 

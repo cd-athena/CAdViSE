@@ -3,4 +3,7 @@
 *.pem
 instances.json
 instance.json
+config.json
 node_modules
+/server/dataset
+commands.md

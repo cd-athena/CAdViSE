@@ -4,38 +4,32 @@ sudo yum -y install docker jq &>/dev/null
 sudo service docker start
 
 config=$(cat /home/ec2-user/config.json)
-mode=$(echo "$config" | jq -r '.mode')
 throttle=$(echo "$config" | jq -r '.throttle')
 player=$(echo "$config" | jq -r '.player')
 
-sudo docker pull babakt/ppt2-"$mode":latest &>/dev/null
+sudo docker pull babakt/ppt-client:latest &>/dev/null
 
 if [[ $throttle == "server" ]]; then
-  sudo docker run --rm -d --name "ppt-$mode-$player" -p 5900:5900 -v /dev/shm:/dev/shm babakt/ppt2-"$mode"
+  sudo docker run --rm -d --name "ppt-client-$player" -p 5900:5900 -v /dev/shm:/dev/shm babakt/ppt-client
 else
   sudo docker network create ppt-net
 
-  bandwidths=($(echo "$config" | jq -r '.shapes[].availableBandwidth'))
-  delays=($(echo "$config" | jq -r '.shapes[].latency'))
-  packetLosses=($(echo "$config" | jq -r '.shapes[].packetLoss'))
-  packetDuplicates=($(echo "$config" | jq -r '.shapes[].packetDuplicate'))
-  packetCorruptions=($(echo "$config" | jq -r '.shapes[].packetCorruption'))
-
-  sudo docker pull lukaszlach/docker-tc:latest &>/dev/null && sudo docker run -d --name docker-tc --network \
+  sudo docker pull lukaszlach/docker-tc:latest &>/dev/null
+  sudo docker run -d --name docker-tc --network \
     host --cap-add NET_ADMIN -v /var/run/docker.sock:/var/run/docker.sock \
     -v /tmp/docker-tc:/tmp/docker-tc lukaszlach/docker-tc
 
-  sudo docker run --rm -d --name "ppt-$mode-$player" --net ppt-net -p 5900:5900 \
+  sudo docker run --rm -d --name "ppt-client-$player" --net ppt-net -p 5900:5900 \
     --label "com.docker-tc.enabled=1" \
-    --label "com.docker-tc.limit=${bandwidths[0]}kbit" \
-    --label "com.docker-tc.delay=${delays[0]}ms" \
-    --label "com.docker-tc.loss=${packetLosses[0]}%" \
-    --label "com.docker-tc.duplicate=${packetDuplicates[0]}%" \
-    --label "com.docker-tc.corrupt=${packetCorruptions[0]}%" \
-    -v /dev/shm:/dev/shm babakt/ppt2-"$mode"
+    --label "com.docker-tc.limit=0kbit" \
+    --label "com.docker-tc.delay=0ms" \
+    --label "com.docker-tc.loss=0%" \
+    --label "com.docker-tc.duplicate=0%" \
+    --label "com.docker-tc.corrupt=0%" \
+    -v /dev/shm:/dev/shm babakt/ppt-client
 fi
 
-sudo docker cp /home/ec2-user/config.json "ppt-$mode-$player:/home/seluser/ppt/config.json"
-sudo docker exec -d "ppt-$mode-$player" sudo pm2 start index.js
+sudo docker cp /home/ec2-user/config.json "ppt-client-$player:/home/seluser/ppt/config.json"
+sudo docker exec -d "ppt-client-$player" sudo pm2 start index.js
 
 exit 0

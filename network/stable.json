@@ -1,0 +1,10 @@
+[
+  {
+    "duration": 180000,
+    "availableBandwidth": 3500,
+    "latency": 180,
+    "packetLoss": 0,
+    "packetDuplicate": 0,
+    "packetCorruption": 0
+  }
+]
