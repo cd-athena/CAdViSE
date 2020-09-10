@@ -27,7 +27,7 @@ startTime=""
 endTime=""
 instancesType="m5ad.large"
 title="bbb"
-clientWarmupTime=2000
+clientWarmupTime=1000
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -298,7 +298,7 @@ startTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 while [ $currentExperiment -lt $experiments ]; do
   ((currentExperiment++))
 
-  showMessage "Running experiment $currentExperiment of $experiments [+$clientWarmupTime(ms) Player warmup time]"
+  showMessage "Running experiment $currentExperiment of $experiments [+$clientWarmupTime(ms) Client warmup time]"
   SSMCommandId=$(aws ssm send-command \
     --instance-ids $clientInstanceIds $serverInstanceId \
     --document-name "AWS-RunShellScript" \
@@ -334,30 +334,30 @@ while [ $currentExperiment -lt $experiments ]; do
 done
 
 #ppt-analytics-ext-id
-endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-
-showMessage "Requesting the analytics data"
-requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
-  -H 'Content-Type: application/json' \
-  -H 'X-Api-Key: '$bitmovinAPIKey \
-  -d '{
-        "startTime": "'$startTime'",
-        "endTime": "'$endTime'",
-        "name": "ppt-analytics-request-'$id'",
-        "licenseKey": "'$analyticsLicenseKey'",
-        "output": {
-          "outputPath": "analytics/'$id'/",
-          "outputId": "'$analyticsOutputId'"
-        }
-      }')
-requestStatus=$(echo "$requestResult" | jq -r '.status')
-taskId=$(echo "$requestResult" | jq -r '.data.result.id')
-taskStatus=$(echo "$requestResult" | jq -r '.data.result.status')
-if [ $taskStatus == 'ERROR' ] || [ $requestStatus == 'ERROR' ]; then
-  showError 'Failed to request the analytics data'
-  echo $requestResult
-else
-  echo $taskId
-fi
+#endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+#
+#showMessage "Requesting the analytics data"
+#requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
+#  -H 'Content-Type: application/json' \
+#  -H 'X-Api-Key: '$bitmovinAPIKey \
+#  -d '{
+#        "startTime": "'$startTime'",
+#        "endTime": "'$endTime'",
+#        "name": "ppt-analytics-request-'$id'",
+#        "licenseKey": "'$analyticsLicenseKey'",
+#        "output": {
+#          "outputPath": "analytics/'$id'/",
+#          "outputId": "'$analyticsOutputId'"
+#        }
+#      }')
+#requestStatus=$(echo "$requestResult" | jq -r '.status')
+#taskId=$(echo "$requestResult" | jq -r '.data.result.id')
+#taskStatus=$(echo "$requestResult" | jq -r '.data.result.status')
+#if [ $taskStatus == 'ERROR' ] || [ $requestStatus == 'ERROR' ]; then
+#  showError 'Failed to request the analytics data'
+#  echo $requestResult
+#else
+#  echo $taskId
+#fi
 
 cleanExit 0
