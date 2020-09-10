@@ -1,9 +1,14 @@
 <!doctype html>
 <html>
 <head>
-    <title>Dash JS Player</title>
-    <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>
-    <script type="text/javascript" src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+    <title>Dash JS Player - Dynamic</title>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://cdn.dashjs.org/v3.1.3/dash.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!--    <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>-->
+    <!--    <script type="text/javascript" src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>-->
 </head>
 <body>
 <div>
@@ -28,29 +33,30 @@
           break
       }
     })
-    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs-default'
-    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs-default'
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs-dynamic'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs-dynamic'
 
     const video = document.getElementById('video')
-    const time = new Date().getTime()
+    // const time = new Date().getTime()
     const player = dashjs.MediaPlayer().create()
-    new bitmovin.analytics.adapters.DashjsAdapter({
-      key: alk,
-      videoId: 'ppt-test',
-      title: title,
-      cdnProvider: 'EC2',
-      experimentName: experimentId,
-      debug: false
-    }, player, { starttime: time })
+
+    // new bitmovin.analytics.adapters.DashjsAdapter({
+    //   key: alk,
+    //   videoId: 'ppt-test',
+    //   title: title,
+    //   cdnProvider: 'EC2',
+    //   experimentName: experimentId,
+    //   debug: false
+    // }, player, { starttime: time })
 
     // const events = ["loadstart",  "suspend", "abort", "error", "emptied", "stalled", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "seeking", "seeked", "ended", "durationchange", "play", "pause", "ratechange", "resize", "volumechange", "timeupdate", "progress"];
     const events = ['loadstart', 'suspend', 'abort', 'error', 'emptied', 'stalled', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked', 'ended', 'durationchange', 'play', 'pause', 'ratechange']
-    const xhr = new XMLHttpRequest()
 
     events.forEach(event => {
       video.addEventListener(event, e => {
-        xhr.open('GET', logURL.replace('%event%', e.type))
-        xhr.send()
+        axios.get(logURL.replace('%event%', e.type) + '&noCache=' + (new Date()).getTime()).catch(error => {
+          console.log(error)
+        })
       })
     })
 

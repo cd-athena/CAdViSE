@@ -2,9 +2,13 @@
 <html>
 <head>
     <title>Shaka Player</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript"
-            src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.5.6/shaka-player.compiled.js"></script>
-    <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>
+            src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.4/shaka-player.compiled.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!--    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.5.6/shaka-player.compiled.js"></script>-->
+    <!--    <script type="text/javascript" src="https://cdn.bitmovin.com/analytics/web/2/bitmovinanalytics.min.js"></script>-->
     <script type="text/javascript">
       const initPlayer = () => {
         const video = document.getElementById('video')
@@ -31,26 +35,26 @@
         const player = new shaka.Player(video)
         window.player = player
         player.load(mpdURL).then(function () {
-          new bitmovin.analytics.adapters.ShakaAdapter({
-              key: alk,
-              videoId: 'ppt-test',
-              title: title,
-              cdnProvider: 'EC2',
-              experimentName: experimentId,
-              debug: false
-            },
-            player)
+          // new bitmovin.analytics.adapters.ShakaAdapter({
+          //     key: alk,
+          //     videoId: 'ppt-test',
+          //     title: title,
+          //     cdnProvider: 'EC2',
+          //     experimentName: experimentId,
+          //     debug: false
+          //   },
+          //   player)
         }).catch((error) => {
           console.error('Error code', error.code, 'object', error)
         })
 
         const events = ['loadstart', 'suspend', 'abort', 'error', 'emptied', 'stalled', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked', 'ended', 'durationchange', 'play', 'pause', 'ratechange']
-        const xhr = new XMLHttpRequest()
 
         events.forEach(event => {
           video.addEventListener(event, e => {
-            xhr.open('GET', logURL.replace('%event%', e.type))
-            xhr.send()
+            axios.get(logURL.replace('%event%', e.type) + '&noCache=' + (new Date()).getTime()).catch(error => {
+              console.log(error)
+            })
           })
         })
       }
