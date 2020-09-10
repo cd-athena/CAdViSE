@@ -21,7 +21,12 @@ app.get('/dataset/:title/:fileName', async (request, response) => {
   const { title, fileName } = request.params
   const { playerABR } = request.query
   const BASEURL = 'http://' + serverIp + '/'
-  await log(playerABR, 'requesting', title, fileName)
+
+  try {
+    await log(playerABR, 'requesting', title, fileName)
+  } catch (error) {
+    return response.send('Failed to record the log: ' + JSON.stringify(error))
+  }
 
   axios({
     method: 'get',
@@ -36,7 +41,12 @@ app.get('/dataset/:title/:filePath/:fileName', async (request, response) => {
   const { title, filePath, fileName } = request.params
   const { playerABR } = request.query
   const BASEURL = 'http://' + serverIp + '/'
-  await log(playerABR, 'requesting', title, filePath + '/' + fileName)
+
+  try {
+    await log(playerABR, 'requesting', title, filePath + '/' + fileName)
+  } catch (error) {
+    return response.send('Failed to record the log: ' + JSON.stringify(error))
+  }
 
   axios({
     method: 'get',
@@ -50,7 +60,13 @@ app.get('/dataset/:title/:filePath/:fileName', async (request, response) => {
 app.get('/log/:title/:eventName', async (request, response) => {
   const { title, eventName } = request.params
   const { playerABR } = request.query
-  await log(playerABR, 'event', title, eventName)
+
+  try {
+    await log(playerABR, 'event', title, eventName)
+  } catch (error) {
+    return response.send('Failed to record the log: ' + JSON.stringify(error))
+  }
+
   response.send('ok')
 })
 
@@ -64,7 +80,7 @@ const log = async (playerABR, action, title, name) => {
     Item: {
       id: uuidv4(),
       experimentId: id,
-      time: new Date().toISOString(),
+      time: (new Date()).toISOString(),
       playerABR,
       action,
       title,
