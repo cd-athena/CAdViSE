@@ -1,8 +1,8 @@
 [
   {
     "duration": 180000,
-    "availableBandwidth": 3500,
-    "latency": 180,
+    "availableBandwidth": 3770,
+    "latency": 185,
     "packetLoss": 0,
     "packetDuplicate": 0,
     "packetCorruption": 0
