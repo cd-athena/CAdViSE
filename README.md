@@ -30,7 +30,7 @@ $ sudo ./run.sh --debug --players bitmovin --shaper network.json
 
 #### Running on AWS cloud
 ```
-sudo ./run.sh --throttle server --players bitmovin --title bbb --shaper network/network0.json --awsKey ppt-key
+sudo ./run.sh --players bitmovin --title bbb --shaper network/network0.json --awsKey ppt-key
 ```
 Setup AWS CLI on your local machine following the provided guideline, you would need to have the "Access keys" from your
 IAM user.

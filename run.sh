@@ -4,14 +4,14 @@
 # some of these would be overwritten by arguments passed to the command
 players=("bitmovin" "dashjs" "shaka" "bola")
 experiments=1
-shaperDurations=(15000)     #ms
-shaperDelays=(70)           #ms
-shaperBandwidths=(5000)     #kbits
-shaperPacketLosses=(0)      #percentage
-shaperPacketDuplicates=(0)  #percentage
-shaperPacketCorruptions=(0) #percentage
+shaperDurations=(15)   #s
+serverIngresses=(5000) #Kbps
+serverEgresses=(5000)  #Kbps
+serverLatencies=(80)   #ms
+clientIngresses=(5000) #Kbps
+clientEgresses=(5000)  #Kbps
+clientLatencies=(80)   #ms
 id=$(date '+%s')
-throttle="client"
 awsProfile="default"
 placementGroup="pptCluster"
 awsKey=""
@@ -27,7 +27,7 @@ startTime=""
 endTime=""
 instancesType="m5ad.large"
 title="bbb"
-clientWarmupTime=1000
+clientWarmupTime=1 #s
 ########################### /configurations ##########################
 
 ########################### functions ############################
@@ -66,12 +66,13 @@ for argument in "$@"; do
       nextArgumentIndex=$((argumentIndex + 2))
       networkConfigFileName="${!nextArgumentIndex}"
       networkConfig=$(cat $networkConfigFileName) || showError "Could not load the network config file"
-      shaperDelays=($(echo "$networkConfig" | jq '.[].latency'))
       shaperDurations=($(echo "$networkConfig" | jq '.[].duration'))
-      shaperBandwidths=($(echo "$networkConfig" | jq '.[].availableBandwidth'))
-      shaperPacketLosses=($(echo "$networkConfig" | jq '.[].packetLoss'))
-      shaperPacketDuplicates=($(echo "$networkConfig" | jq '.[].packetDuplicate'))
-      shaperPacketCorruptions=($(echo "$networkConfig" | jq '.[].packetCorruption'))
+      serverIngresses=($(echo "$networkConfig" | jq '.[].serverIngress'))
+      serverEgresses=($(echo "$networkConfig" | jq '.[].serverEgress'))
+      serverLatencies=($(echo "$networkConfig" | jq '.[].serverLatency'))
+      clientIngresses=($(echo "$networkConfig" | jq '.[].clientIngress'))
+      clientEgresses=($(echo "$networkConfig" | jq '.[].clientEgress'))
+      clientLatencies=($(echo "$networkConfig" | jq '.[].clientLatency'))
       ;;
     "--cluster")
       nextArgumentIndex=$((argumentIndex + 2))
@@ -80,13 +81,6 @@ for argument in "$@"; do
     "--title")
       nextArgumentIndex=$((argumentIndex + 2))
       title="${!nextArgumentIndex}"
-      ;;
-    "--throttle")
-      nextArgumentIndex=$((argumentIndex + 2))
-      throttle="${!nextArgumentIndex}"
-      if [[ $throttle != "server" && $throttle != "client" ]]; then
-        showError "Invalid throttling mode [$throttle]"
-      fi
       ;;
     "--awsProfile")
       nextArgumentIndex=$((argumentIndex + 2))
@@ -142,11 +136,11 @@ for duration in "${shaperDurations[@]}"; do
   durationOfExperiment=$(echo "$durationOfExperiment + $duration" | bc -l)
 done
 
-if [[ $durationOfExperiment -gt 596000 ]]; then
+if [[ $durationOfExperiment -gt 596 ]]; then
   showError "Maximum duration of each experiment can not be more than test asset length (09:56)"
 fi
 
-showMessage "Running $experiments experiment(s) by $throttle throttling on the following players for ${durationOfExperiment}ms each"
+showMessage "Running $experiments experiment(s) on the following players for ${durationOfExperiment}s each"
 printf '%s ' "${players[@]}"
 printf "\n"
 
@@ -198,9 +192,8 @@ serverPublicIp=($(aws ec2 describe-instances --instance-ids $serverInstanceId --
 serverPrivateIp=$(jq -r '.Instances[].PrivateIpAddress' <"$id/instance.json")
 configSkeleton=$(cat configSkeleton.json)
 
-((durationOfExperiment += clientWarmupTime)) # load the player
+((durationOfExperiment += clientWarmupTime)) # warm up client
 config="${configSkeleton/--id--/$id}"
-config="${config/--throttle--/$throttle}"
 config="${config/--title--/$title}"
 config="${config/--alk--/$analyticsLicenseKey}"
 config="${config/--serverIp--/$serverPrivateIp}"
@@ -209,11 +202,12 @@ config="${config/--experimentDuration--/$durationOfExperiment}"
 shaperIndex=0
 networkConfig="{
     \"duration\": ${clientWarmupTime},
-    \"availableBandwidth\": 0,
-    \"latency\": 0,
-    \"packetLoss\": 0,
-    \"packetDuplicate\": 0,
-    \"packetCorruption\": 0
+    \"serverIngress\": 0,
+    \"serverEgress\": 0,
+    \"serverLatency\": 0,
+    \"clientIngress\": 0,
+    \"clientEgress\": 0,
+    \"clientLatency\": 0
   }"
 while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
   if [[ $networkConfig != "" ]]; then
@@ -221,11 +215,12 @@ while [ $shaperIndex -lt "${#shaperDurations[@]}" ]; do
   fi
   networkConfig+="{
     \"duration\": ${shaperDurations[shaperIndex]},
-    \"availableBandwidth\": ${shaperBandwidths[shaperIndex]},
-    \"latency\": ${shaperDelays[shaperIndex]},
-    \"packetLoss\": ${shaperPacketLosses[shaperIndex]},
-    \"packetDuplicate\": ${shaperPacketDuplicates[shaperIndex]},
-    \"packetCorruption\": ${shaperPacketCorruptions[shaperIndex]}
+    \"serverIngress\": ${serverIngresses[shaperIndex]},
+    \"serverEgress\": ${serverEgresses[shaperIndex]},
+    \"serverLatency\": ${serverLatencies[shaperIndex]},
+    \"clientIngress\": ${clientIngresses[shaperIndex]},
+    \"clientEgress\": ${clientEgresses[shaperIndex]},
+    \"clientLatency\": ${clientLatencies[shaperIndex]}
   }"
   ((shaperIndex++))
 done
@@ -298,7 +293,7 @@ startTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 while [ $currentExperiment -lt $experiments ]; do
   ((currentExperiment++))
 
-  showMessage "Running experiment $currentExperiment of $experiments [+$clientWarmupTime(ms) Client warmup time]"
+  showMessage "Running experiment $currentExperiment of $experiments [+$clientWarmupTime(s) Client warmup time]"
   SSMCommandId=$(aws ssm send-command \
     --instance-ids $clientInstanceIds $serverInstanceId \
     --document-name "AWS-RunShellScript" \
@@ -312,7 +307,7 @@ while [ $currentExperiment -lt $experiments ]; do
   echo "$SSMCommandId"
 
   SSMCommandResult="InProgress"
-  time=$durationOfExperiment/1000
+  time=$durationOfExperiment
   timer=$time
   while [[ $SSMCommandResult == *"InProgress"* ]]; do
     minutes=$((timer / 60))

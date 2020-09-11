@@ -1,23 +1,29 @@
 #!/bin/bash
 
 config=$(cat /home/ec2-user/config.json)
-throttle=$(echo "$config" | jq -r '.throttle')
 
-if [[ $throttle == "server" ]]; then
-  durations=($(echo "$config" | jq -r '.shapes[].duration'))
-  bandwidths=($(echo "$config" | jq -r '.shapes[].availableBandwidth'))
-  delays=($(echo "$config" | jq -r '.shapes[].latency'))
-  packetLosses=($(echo "$config" | jq -r '.shapes[].packetLoss'))
-  packetDuplicates=($(echo "$config" | jq -r '.shapes[].packetDuplicate'))
-  packetCorruptions=($(echo "$config" | jq -r '.shapes[].packetCorruption'))
+durations=($(echo "$config" | jq -r '.shapes[].duration'))
+ingresses=($(echo "$config" | jq -r '.shapes[].serverIngress'))
+egresses=($(echo "$config" | jq -r '.shapes[].serverEgress'))
+latencies=($(echo "$config" | jq -r '.shapes[].serverLatency'))
 
-  shaperIndex=0
-  while [ $shaperIndex -lt "${#durations[@]}" ]; do
-    sudo docker exec "docker-tc" curl -sd"rate=${bandwidths[$shaperIndex]}kbit&delay=${delays[$shaperIndex]}ms&loss=${packetLosses[$shaperIndex]}%&duplicate=${packetDuplicates[$shaperIndex]}%&corrupt=${packetCorruptions[$shaperIndex]}%" "localhost:4080/ppt-server"
+shaperIndex=0
+while [ $shaperIndex -lt "${#durations[@]}" ]; do
 
-    sleep $((durations[shaperIndex] / 1000))
-    ((shaperIndex++))
-  done
-fi
+  sudo /home/ec2-user/wondershaper/wondershaper -a eth0 -c
+
+  if [[ ${ingresses[$shaperIndex]} -gt 0 ]] && [[ ${egresses[$shaperIndex]} -gt 0 ]]; then
+    sudo /home/ec2-user/wondershaper/wondershaper -a eth0 -d "${ingresses[$shaperIndex]}" -u "${egresses[$shaperIndex]}"
+  elif [[ ${ingresses[$shaperIndex]} -gt 0 ]]; then
+    sudo /home/ec2-user/wondershaper/wondershaper -a eth0 -d "${ingresses[$shaperIndex]}"
+  elif [[ ${egresses[$shaperIndex]} -gt 0 ]]; then
+    sudo /home/ec2-user/wondershaper/wondershaper -a eth0 -u "${egresses[$shaperIndex]}"
+  elif [[ ${latencies[$shaperIndex]} -gt 0 ]]; then
+    sudo tc qdisc replace dev eth0 root netem delay "${latencies[$shaperIndex]}ms"
+  fi
+
+  sleep $((durations[shaperIndex]))
+  ((shaperIndex++))
+done
 
 exit 0
