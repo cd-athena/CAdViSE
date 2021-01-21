@@ -2,7 +2,7 @@
 
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
-players=("bitmovin" "dashjs" "shaka" "bola")
+players=("bitmovin" "dashjs" "shaka" "bola" "bba0" "elastic" "fastmpc" "quetra")
 experiments=1
 shaperDurations=(15)   #s
 serverIngresses=(5000) #Kbps
@@ -26,7 +26,7 @@ analyticsOutputId="25250e48-1cb2-4d4c-bf11-4b03d6096395"
 startTime=""
 endTime=""
 instancesType="m5ad.large"
-title="bbb"
+title="bbb1"
 clientWarmupTime=1 #s
 ########################### /configurations ##########################
 
@@ -329,30 +329,30 @@ while [ $currentExperiment -lt $experiments ]; do
 done
 
 #ppt-analytics-ext-id
-#endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-#
-#showMessage "Requesting the analytics data"
-#requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
-#  -H 'Content-Type: application/json' \
-#  -H 'X-Api-Key: '$bitmovinAPIKey \
-#  -d '{
-#        "startTime": "'$startTime'",
-#        "endTime": "'$endTime'",
-#        "name": "ppt-analytics-request-'$id'",
-#        "licenseKey": "'$analyticsLicenseKey'",
-#        "output": {
-#          "outputPath": "analytics/'$id'/",
-#          "outputId": "'$analyticsOutputId'"
-#        }
-#      }')
-#requestStatus=$(echo "$requestResult" | jq -r '.status')
-#taskId=$(echo "$requestResult" | jq -r '.data.result.id')
-#taskStatus=$(echo "$requestResult" | jq -r '.data.result.status')
-#if [ $taskStatus == 'ERROR' ] || [ $requestStatus == 'ERROR' ]; then
-#  showError 'Failed to request the analytics data'
-#  echo $requestResult
-#else
-#  echo $taskId
-#fi
+endTime=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+showMessage "Requesting the analytics data"
+requestResult=$(curl -s -X POST https://api.bitmovin.com/v1/analytics/exports/ \
+  -H 'Content-Type: application/json' \
+  -H 'X-Api-Key: '$bitmovinAPIKey \
+  -d '{
+        "startTime": "'$startTime'",
+        "endTime": "'$endTime'",
+        "name": "ppt-analytics-request-'$id'",
+        "licenseKey": "'$analyticsLicenseKey'",
+        "output": {
+          "outputPath": "analytics/'$id'/",
+          "outputId": "'$analyticsOutputId'"
+        }
+      }')
+requestStatus=$(echo "$requestResult" | jq -r '.status')
+taskId=$(echo "$requestResult" | jq -r '.data.result.id')
+taskStatus=$(echo "$requestResult" | jq -r '.data.result.status')
+if [ $taskStatus == 'ERROR' ] || [ $requestStatus == 'ERROR' ]; then
+  showError 'Failed to request the analytics data'
+  echo $requestResult
+else
+  echo $taskId
+fi
 
 cleanExit 0

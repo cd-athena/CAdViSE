@@ -1,10 +1,11 @@
 [
   {
-    "duration": 60000,
-    "availableBandwidth": 0,
-    "latency": 0,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 120,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 0,
+    "clientIngress": 0,
+    "clientEgress": 0,
+    "clientLatency": 0
   }
 ]

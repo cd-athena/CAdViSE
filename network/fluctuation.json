@@ -1,146 +1,119 @@
 [
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 370,
+    "clientEgress": 0,
+    "clientLatency": 0
   },
   {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
-  },
-  {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
-  },
-  {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
-  },
-  {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
-  },
-  {
-    "duration": 10000,
-    "availableBandwidth": 370,
-    "latency": 230,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
-  },
-  {
-    "duration": 10000,
-    "availableBandwidth": 7170,
-    "latency": 145,
-    "packetLoss": 0,
-    "packetDuplicate": 0,
-    "packetCorruption": 0
+    "duration": 10,
+    "serverIngress": 0,
+    "serverEgress": 0,
+    "serverLatency": 80,
+    "clientIngress": 7170,
+    "clientEgress": 0,
+    "clientLatency": 0
   }
 ]
