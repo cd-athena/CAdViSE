@@ -35,3 +35,23 @@
 Copy the assigned IP address from the terminal, add `:5900` to the end of it
 and try to connect with a VNC client.
 Note that vnc service will be available only after initialization stage.
+
+#### Acknowledgement
+
+If you use this software, or derivates of it, in your research, you must:
+
+1. Include the link to this repository
+2. Cite the following publication:
+
+_Babak Taraghi, Anatoliy Zabrovskiy, Christian Timmerer, and Hermann Hell- wagner. 2020. CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players. In Proceedings of the 11th ACM Multimedia Systems Conference. 349–352. https://doi.org/10.1145/3339825.3393581_
+```
+@inproceedings{taraghi2020cadvise,
+  title={{CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players}},
+  author={Taraghi, Babak and Zabrovskiy, Anatoliy and Timmerer, Christian and Hellwagner, Hermann},
+  booktitle={Proceedings of the 11th ACM Multimedia Systems Conference},
+  pages={349--352},
+  year={2020},
+  url={https://doi.org/10.1145/3339825.3393581},
+  doi={10.1145/3339825.3393581}
+}
+```
