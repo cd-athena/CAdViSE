@@ -12,7 +12,7 @@
   "repository": "https://github.com/cd-athena/ppt",
   "dependencies": {
     "aws-sdk": "^2.740.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "express": "^4.17.1",
     "uuid": "^8.3.0"
   },
