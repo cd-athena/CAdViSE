@@ -3,11 +3,11 @@
 - Execute experiments on AWS cloud 
 - Configurable network attributes are
     - `duration` (seconds)
-    - `serverIngress` (kbit)
-    - `serverEgress` (kbit)
+    - `serverIngress` (kbps)
+    - `serverEgress` (kbps)
     - `serverLatency` (ms)
-    - `clientIngress` (kbit)
-    - `clientEgress` (kbit)
+    - `clientIngress` (kbps)
+    - `clientEgress` (kbps)
     - `clientLatency` (ms)
  
 **Note** The combination of `bandwidth` and `latency` in one node is not allowed.
