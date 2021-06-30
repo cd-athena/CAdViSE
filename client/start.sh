@@ -7,7 +7,7 @@ duration=$(($(echo "$config" | jq -r '.experimentDuration')))
 title=$(echo "$config" | jq -r '.title')
 player=$(echo "$config" | jq -r '.player')
 
-sudo docker exec -d "ppt-client-$player" python /home/seluser/ppt/ppt.py "http://localhost/player/$player?id=$id&title=$title&alk=$alk" "$duration"
+sudo docker exec -d "ppt-client-$player" python3 /home/seluser/ppt/ppt.py "http://localhost/player/$player?id=$id&title=$title&alk=$alk" "$duration"
 
 durations=($(echo "$config" | jq -r '.shapes[].duration'))
 ingresses=($(echo "$config" | jq -r '.shapes[].clientIngress'))

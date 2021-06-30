@@ -8,11 +8,11 @@
   },
   "author": "Babak T (babak@itec.aau.at)",
   "license": "ISC",
-  "repository": "https://github.com/cd-athena/ppt",
+  "repository": "https://github.com/cd-athena/CAdViSE",
   "dependencies": {
     "express": "^4.17.1"
   },
   "devDependencies": {
-    "standard": "^14.3.4"
+    "standard": "^16.0.3"
   }
 }

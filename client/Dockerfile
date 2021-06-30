@@ -2,7 +2,7 @@ FROM selenium/standalone-chrome-debug:latest
 MAINTAINER babak@itec.aau.at
 
 RUN sudo curl -sL https://deb.nodesource.com/setup_14.x | sudo bash -
-RUN sudo apt-get update && sudo apt-get install -y nodejs python-pip
+RUN sudo apt-get update && sudo apt-get install -y nodejs python3-pip
 RUN pip install selenium
 
 WORKDIR /home/seluser/ppt

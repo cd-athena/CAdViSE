@@ -9,14 +9,14 @@
   },
   "author": "Babak T (babak@itec.aau.at)",
   "license": "ISC",
-  "repository": "https://github.com/cd-athena/ppt",
+  "repository": "https://github.com/cd-athena/CAdViSE",
   "dependencies": {
-    "aws-sdk": "^2.740.0",
+    "aws-sdk": "^2.936.0",
     "axios": "^0.21.1",
     "express": "^4.17.1",
-    "uuid": "^8.3.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "standard": "^14.3.4"
+    "standard": "^16.0.3"
   }
 }
