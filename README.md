@@ -38,8 +38,6 @@ Note that vnc service will be available only after initialization stage.
 
 #### Acknowledgement
 
-If you use this software, or derivates of it, in your research, you must:
-
 1. Include the link to this repository
 2. Cite the following publication:
 
