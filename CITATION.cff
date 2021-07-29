@@ -1,6 +1,5 @@
-cff-version: 1.1.0
+cff-version: 1.2.0
 message: "If you use this software, or derivates of it, in your research, please cite it using these metadata."
-abstract: Attempting to cope with fluctuations of network conditions in terms of available bandwidth, latency and packet loss, and to deliver the highest quality of video (and audio) content to users, research on adaptive video streaming has attracted intense efforts from the research community and huge investments from technology giants. How successful these efforts and investments are, is a question that needs precise measurements of the results of those technological advancements. HTTP-based Adaptive Streaming (HAS) algorithms, which seek to improve video streaming over the Internet, introduce video bitrate adaptivity in a way that is scalable and efficient. However, how each HAS implementation takes into account the wide spectrum of variables and configuration options, brings a high complexity to the task of measuring the results and visualizing the statistics of the performance and quality of experience. In this paper, we introduce CAdViSE, our Cloud-based Adaptive Video Streaming Evaluation framework for the automated testing of adaptive media players. The paper aims to demonstrate a test environment which can be instantiated in a cloud infrastructure, examines multiple media players with different network attributes at defined points of the experiment time, and finally concludes the evaluation with visualized statistics and insights into the results.
 authors:
   - family-names: Taraghi
     given-names: Babak
@@ -14,9 +13,7 @@ authors:
     given-names: Hermann
     orcid: https://orcid.org/0000-0003-1114-2584
 title: CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players
-version: 2.0
+version: 2.0.0
 doi: 10.1145/3339825.3393581
 date-released: 2020-09-10
-keywords:
-  - testbed
-license: "CC-BY-4.0"
+url: "https://github.com/cd-athena/CAdViSE"
