@@ -18,8 +18,10 @@ preferred-citation:
   url : "https://doi.org/10.1145/3339825.3393581"
   type: conference-paper
   pages: "349--352"
+  collection-title: "Proceedings of the 11th ACM Multimedia Systems Conference"
+  collection-type: proceedings
   conference:
-        name: "Proceedings of the 11th ACM Multimedia Systems Conference"
+        name: "MMSys '20"
 title: "CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players"
 version: 2.0.0
 date-released: 2020-09-10
