@@ -18,6 +18,8 @@ preferred-citation:
   url : "https://doi.org/10.1145/3339825.3393581"
   type: conference-paper
   pages: "349--352"
+  year: "2020"
+  isbn: "9781450368452"
   collection-title: "Proceedings of the 11th ACM Multimedia Systems Conference"
   collection-type: proceedings
   conference:
