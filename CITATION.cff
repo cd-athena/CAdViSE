@@ -22,8 +22,12 @@ preferred-citation:
   isbn: "9781450368452"
   collection-title: "Proceedings of the 11th ACM Multimedia Systems Conference"
   collection-type: proceedings
+  location:
+        name: "Istanbul, Turkey"
   conference:
         name: "MMSys '20"
+  publisher:
+        name: "Association for Computing Machinery"
 title: "CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players"
 version: 2.0.0
 date-released: 2020-09-10
