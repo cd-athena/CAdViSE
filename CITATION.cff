@@ -28,6 +28,7 @@ preferred-citation:
         name: "MMSys '20"
   publisher:
         name: "Association for Computing Machinery"
+        address: "New York, NY, USA"
 title: "CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players"
 version: 2.0.0
 date-released: 2020-09-10
