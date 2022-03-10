@@ -1,19 +1,26 @@
 cff-version: 1.2.0
-message: "If you use this software or derivatives of it in your research, please cite it using these metadata."
-authors:
-- family-names: "Taraghi"
-  given-names: "Babak"
-  orcid: "https://orcid.org/0000-0003-2717-4660"
-- family-names: "Zabrovskiy"
-  given-names: "Anatoliy"
-- family-names: "Timmerer"
-  given-names: "Christian"
-  orcid: "https://orcid.org/0000-0002-0031-5243"
-- family-names: "Hellwagner"
-  given-names: "Hermann"
-  orcid: "https://orcid.org/0000-0003-1114-2584"
+message: "If you use this software, please cite both the article from preferred-citation and the software itself."
+preferred-citation:
+  authors:
+    - family-names: "Taraghi"
+      given-names: "Babak"
+      orcid: "https://orcid.org/0000-0003-2717-4660"
+    - family-names: "Zabrovskiy"
+      given-names: "Anatoliy"
+    - family-names: "Timmerer"
+      given-names: "Christian"
+      orcid: "https://orcid.org/0000-0002-0031-5243"
+    - family-names: "Hellwagner"
+      given-names: "Hermann"
+      orcid: "https://orcid.org/0000-0003-1114-2584"
+  title: "CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players"
+  doi: 10.1145/3339825.3393581
+  url : "https://doi.org/10.1145/3339825.3393581"
+  type: conference-paper
+  pages: "349--352"
+  conference:
+        name: "Proceedings of the 11th ACM Multimedia Systems Conference"
 title: "CAdViSE: Cloud-based Adaptive Video Streaming Evaluation Framework for the Automated Testing of Media Players"
 version: 2.0.0
-doi: 10.1145/3339825.3393581
 date-released: 2020-09-10
 url: "https://github.com/cd-athena/CAdViSE"
