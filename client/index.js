@@ -12,6 +12,11 @@ app.get('/:anything', (request, response) => {
   response.send('')
 })
 
+app.get('/player/:playerName/asset/:assetName', async (request, response) => {
+  const {playerName, assetName} = request.params
+  fs.createReadStream('player/' + playerName + '/' + assetName).pipe(response)
+})
+
 app.get('/player/:playerName', async (request, response) => {
   const { playerName } = request.params
   fs.createReadStream('player/' + playerName + '/index.html').pipe(response)
