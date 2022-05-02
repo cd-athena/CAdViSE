@@ -45,7 +45,7 @@ function WISHRuleClass() {
     function getMaxIndex(rulesContext) {
 
         if (!rulesContext || !rulesContext.hasOwnProperty('getMediaInfo') || !rulesContext.hasOwnProperty('getMediaType') || !rulesContext.hasOwnProperty('useBufferOccupancyABR') ||
-            !rulesContext.hasOwnProperty('getAbrController') || !rulesContext.hasOwnProperty('getScheduleController')) {
+          !rulesContext.hasOwnProperty('getAbrController') || !rulesContext.hasOwnProperty('getScheduleController')) {
             console.log("===== Just return 1 ===");
 
             return switchRequest;
@@ -120,7 +120,7 @@ function WISHRuleClass() {
             const m_xi = 0.8;
             const m_delta = 1;
             buffer_size = mediaPlayerModel.getStableBufferTime();
-            console.log("------------------- buffer size: " + buffer_size);
+            console.log("------------------- currentbufferS: " + currentbufferS);
             setWeights(m_xi, m_delta, qualityLevelList, SD);
 
             if (currentbufferS <= low_buff_thresS) {
@@ -140,7 +140,7 @@ function WISHRuleClass() {
                 }
 
                 console.log ("Downloaded segment " + (num_downloaded_segments-1) +
-                    " at quality: " + selected_quality_index_array[num_downloaded_segments-1]);
+                  " at quality: " + selected_quality_index_array[num_downloaded_segments-1]);
 
                 for (let i = 1; i <= max_quality; i++) {
                     let currentTotalCost = Math.round(100*getTotalCost_v3(rulesContext, bitrates, i, estimated_throghputKbps, currentbufferS, num_downloaded_segments));
@@ -235,7 +235,7 @@ function WISHRuleClass() {
     }
 
     function getTotalCost_v3(rulesContext, bitrates, qualityIndex,
-                             estimated_throghputKbps, currentbufferS, num_downloaded_segments) {
+      estimated_throghputKbps, currentbufferS, num_downloaded_segments) {
         // console.log("\t getTotalCost_v3 triggered ");
         // console.log("\t qualityIndex: " + qualityIndex);
         let totalCost;

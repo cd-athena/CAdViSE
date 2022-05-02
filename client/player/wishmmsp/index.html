@@ -18,82 +18,65 @@
 
 </div>
 
-<!-- <div id='trace' style="height:640px;width:480px;border:1px solid #ccc;font:16px/26px Georgia, Garamond;overflow:auto;"></div> -->
-
-<!-- <script src="/home/minh/Documents/WISH-CAdViSE/client/player/wishmmsp/dash.all.min.js"></script>	 -->
 <script src="https://cdn.dashjs.org/v3.2.2/dash.all.min.js"></script>
 <script src="http://localhost/player/wishmmsp/asset/wish.js"></script>
 <script >
-    /* Enable CMCD - S */
-    var CMCD_DATA_GENERATED = dashjs.MetricsReporting.events.CMCD_DATA_GENERATED;
+  var player;
 
-    var CMCD_MODE_QUERY = 'query';  /* as query parameters */
-    var CMCD_MODE_HEADER = 'header'; /* as HTTP headers */
-    var player;
-    /* Enable CMCD - E */
+  (function() {
+    var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
+    var video = document.querySelector("#videoPlayer");
+    player = dashjs.MediaPlayer().create();
 
-    (function() {
-        var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
-        // var url = "http://localhost:8080/media/vod/bbb_30fps_akamai/bbb_30fps.mpd";
-        // var url = "https://media.axprod.net/TestVectors/Dash/not_protected_dash_1080p_h264/manifest.mpd";
-        var video = document.querySelector("#videoPlayer");
-        player = dashjs.MediaPlayer().create();
+    /* done use dash.js default rules*/
+    player.updateSettings({
+      streaming: {
+        abr: {
+          useDefaultABRRules: false,
+          movingAverageMethod: 'ewma'
+        },
+        stableBufferTime: 20,
+        bufferTimeAtTopQuality: 20
+      }
+    });
 
-        /* done use dash.js default rules*/
-        player.updateSettings({
-            streaming: {
-                abr: {
-                    useDefaultABRRules: false
-                    // ABRStrategy: 'abrThroughput'
-                    // additionalAbrRules: {
-                    // 	insufficientBufferRule: false,
-                    // 	switchHistoryRule: false,
-                    // 	droppedFramesRule: false,
-                    // 	abandonRequestsRule: false
-                    // }
-                },
-                stableBufferTime: 20,
-                bufferTimeAtTopQuality: 20
-            }
-        });
+    /* add custom ABR */
+    player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule);
 
-        /* add custom ABR */
-        player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule);
+    /* for autoplay*/
+    player.on(dashjs.MediaPlayer.events.PLAYBACK_NOT_ALLOWED, function (data) {
+      console.log('Playback did not start duto auto play restrictions. Mute audio and reloading');
+      video.muted = true;
+      player.initialize(video, url, true);
+    });
+    /* for autoplay*/
 
-        /* for autoplay*/
-        player.on(dashjs.MediaPlayer.events.PLAYBACK_NOT_ALLOWED, function (data) {
-            console.log('Playback did not start duto auto play restrictions. Mute audio and reloading');
-            video.muted = true;
-            player.initialize(video, url, true);
-        });
-        /* for autoplay*/
+    player.initialize(video, url, true);
 
-        player.initialize(video, url, true);
+    var eventPoller = setInterval(function () {
+      var streamInfo = player.getActiveStream().getStreamInfo();
+      var dashMetrics = player.getDashMetrics();
+      var dashAdapter = player.getDashAdapter();
 
-        var eventPoller = setInterval(function () {
-            var streamInfo = player.getActiveStream().getStreamInfo();
-            var dashMetrics = player.getDashMetrics();
-            var dashAdapter = player.getDashAdapter();
+      if (dashMetrics && streamInfo) {
+        const periodIdx = streamInfo.index;
+        var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+        var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+        var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
+        var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
+        var currentRep = adaptation.Representation_asArray.find(function (rep) {
+          return rep.id === repSwitch.to
+        })
+        var frameRate = currentRep.frameRate;
+        var resolution = currentRep.width + 'x' + currentRep.height;
+        document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
+        document.getElementById('framerate').innerText = frameRate + " fps";
+        document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
+        document.getElementById('resolution').innerText = resolution;
+      }
+    }, 1000);
 
-            if (dashMetrics && streamInfo) {
-                const periodIdx = streamInfo.index;
-                var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
-                var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
-                var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
-                var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
-                var currentRep = adaptation.Representation_asArray.find(function (rep) {
-                    return rep.id === repSwitch.to
-                })
-                var frameRate = currentRep.frameRate;
-                var resolution = currentRep.width + 'x' + currentRep.height;
-                document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
-                document.getElementById('framerate').innerText = frameRate + " fps";
-                document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
-                document.getElementById('resolution').innerText = resolution;
-            }
-        }, 1000);
-
-    })();
+  })();
 </script>
 
 </body>
