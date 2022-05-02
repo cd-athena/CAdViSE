@@ -10,25 +10,34 @@
     <video id="videoPlayer" width="640" height="480" controls></video>
 </div>
 
-<div>
-    Reported bitrate:<p id="reportedBitrate"></p>
-    Buffer level:<p id="bufferLevel"></p>
-    Framerate:<p id="framerate"></p>
-    Resolution:<p id="resolution"></p>
-
-</div>
-
 <script src="https://cdn.dashjs.org/v3.2.2/dash.all.min.js"></script>
 <script src="http://localhost/player/wishmmsp/asset/wish.js"></script>
-<script >
-  var player;
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', () => {
+    const keyValues = window.location.search.substr(1).split('&')
+    let experimentId, title, alk
 
-  (function() {
-    var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
-    var video = document.querySelector("#videoPlayer");
-    player = dashjs.MediaPlayer().create();
+    keyValues.forEach(keyValueString => {
+      let keyValueArray = keyValueString.split('=')
+      switch (keyValueArray[0]) {
+        case 'id':
+          experimentId = keyValueArray[1]
+          break
+        case 'title':
+          title = keyValueArray[1]
+          break
+        case 'alk':
+          alk = keyValueArray[1]
+          break
+      }
+    })
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs3-wishmmsp'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs3-wishmmsp'
 
-    /* done use dash.js default rules*/
+    const video = document.getElementById('video')
+    const player = dashjs.MediaPlayer().create()
+
     player.updateSettings({
       streaming: {
         abr: {
@@ -38,46 +47,25 @@
         stableBufferTime: 20,
         bufferTimeAtTopQuality: 20
       }
-    });
+    })
 
     /* add custom ABR */
-    player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule);
+    player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule)
 
-    /* for autoplay*/
-    player.on(dashjs.MediaPlayer.events.PLAYBACK_NOT_ALLOWED, function (data) {
-      console.log('Playback did not start duto auto play restrictions. Mute audio and reloading');
-      video.muted = true;
-      player.initialize(video, url, true);
-    });
-    /* for autoplay*/
+    // const events = ["loadstart",  "suspend", "abort", "error", "emptied", "stalled", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "seeking", "seeked", "ended", "durationchange", "play", "pause", "ratechange", "resize", "volumechange", "timeupdate", "progress"];
+    const events = ['loadstart', 'suspend', 'abort', 'error', 'emptied', 'stalled', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked', 'ended', 'durationchange', 'play', 'pause', 'ratechange']
 
-    player.initialize(video, url, true);
-
-    var eventPoller = setInterval(function () {
-      var streamInfo = player.getActiveStream().getStreamInfo();
-      var dashMetrics = player.getDashMetrics();
-      var dashAdapter = player.getDashAdapter();
-
-      if (dashMetrics && streamInfo) {
-        const periodIdx = streamInfo.index;
-        var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
-        var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
-        var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
-        var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
-        var currentRep = adaptation.Representation_asArray.find(function (rep) {
-          return rep.id === repSwitch.to
+    events.forEach(event => {
+      video.addEventListener(event, e => {
+        axios.get(logURL.replace('%event%', e.type) + '&noCache=' + (new Date()).getTime()).catch(error => {
+          console.log(error)
         })
-        var frameRate = currentRep.frameRate;
-        var resolution = currentRep.width + 'x' + currentRep.height;
-        document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
-        document.getElementById('framerate').innerText = frameRate + " fps";
-        document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
-        document.getElementById('resolution').innerText = resolution;
-      }
-    }, 1000);
+      })
+    })
 
-  })();
+    player.initialize(video, mpdURL, false)
+    player.play()
+  })
 </script>
-
 </body>
 </html>
