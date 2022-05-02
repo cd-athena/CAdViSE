@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> WISH ABR Algorithm</title>
+    <title> WISH-Logarithm ABR Algorithm</title>
 </head>
 <body>
 <div>
@@ -11,7 +11,7 @@
 </div>
 
 <script src="https://cdn.dashjs.org/v3.2.2/dash.all.min.js"></script>
-<script src="http://localhost/player/wishmmsp/asset/wish.js"></script>
+<script src="http://localhost/player/wishlog/asset/wish.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', () => {
@@ -32,8 +32,8 @@
           break
       }
     })
-    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs3-wishmmsp'
-    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs3-wishmmsp'
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs3-wishlog'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs3-wishlog'
 
     const video = document.getElementById('video')
     const player = dashjs.MediaPlayer().create()

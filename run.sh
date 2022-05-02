@@ -2,7 +2,7 @@
 
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
-players=("bitmovin" "dashjs" "dashjs4" "shaka" "bola" "wishmmsp")
+players=("bitmovin" "dashjs" "dashjs4" "shaka" "bola" "wishmmsp" "wishlog")
 experiments=1
 shaperDurations=(15)   #s
 serverIngresses=(5000) #Kbps
@@ -146,6 +146,7 @@ printf "\n"
 
 showMessage "Spinning up server EC2 instance"
 aws ec2 run-instances \
+  --region eu-central-1 \
   --image-id ami-0ab838eeee7f316eb \
   --instance-type $instancesType \
   --key-name $awsKey \
@@ -161,6 +162,7 @@ printf "\n"
 
 showMessage "Spinning up client EC2 instance(s)"
 aws ec2 run-instances \
+  --region eu-central-1 \
   --image-id ami-0ab838eeee7f316eb \
   --count ${#players[@]} \
   --instance-type $instancesType \
