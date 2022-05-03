@@ -12,7 +12,7 @@ def runPlayer(playerURL, duration):
     options = Options()
     options.add_argument('--disable-gpu')
 #     options.add_argument('--headless')
-#     options.add_argument('--auto-open-devtools-for-tabs')
+    options.add_argument('--auto-open-devtools-for-tabs')
     options.add_argument("--kiosk")
     options.add_argument('--autoplay-policy=no-user-gesture-required')
     driver = webdriver.Chrome(chrome_options=options)

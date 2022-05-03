@@ -25,8 +25,8 @@ bitmovinAPIKey=""
 analyticsOutputId=""
 startTime=""
 endTime=""
-instancesType="m5ad.large"
-title="bbb1"
+instancesType="m5ad.xlarge"
+title="stc"
 clientWarmupTime=1 #s
 ########################### /configurations ##########################
 
