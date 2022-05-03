@@ -1,7 +1,9 @@
-name: Docker Server Image CI
+name: Server Docker Image CI
 
 on:
   push:
+    branches:
+      - master
     paths:
       - 'server/**'
 
@@ -10,14 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Build server docker image
         run: docker build -t babakt/ppt-server:cadvise ./server/
+
       - name: Docker hub login
         env:
           DOCKER_USER: ${{secrets.DOCKER_HUB_USER}}
           DOCKER_PASS: ${{secrets.DOCKER_HUB_PASS}}
         run: echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+
       - name: Push the image to docker hub
         run: docker push babakt/ppt-server:cadvise
+
       - name: Docker hub logout
         run: docker logout

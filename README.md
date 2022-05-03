@@ -1,5 +1,5 @@
-[![Docker Client Image CI](https://github.com/cd-athena/CAdViSE/actions/workflows/clientDockerImage.yml/badge.svg?branch=master&event=push)](https://github.com/cd-athena/CAdViSE/actions/workflows/clientDockerImage.yml)
-[![Docker Server Image CI](https://github.com/cd-athena/CAdViSE/actions/workflows/serverDockerImage.yml/badge.svg?branch=master&event=push)](https://github.com/cd-athena/CAdViSE/actions/workflows/serverDockerImage.yml)
+[![Client Docker Image CI](https://github.com/cd-athena/CAdViSE/actions/workflows/clientDockerImage.yml/badge.svg?branch=master&event=push)](https://github.com/cd-athena/CAdViSE/actions/workflows/clientDockerImage.yml)
+[![Server Docker Image CI](https://github.com/cd-athena/CAdViSE/actions/workflows/serverDockerImage.yml/badge.svg?branch=master&event=push)](https://github.com/cd-athena/CAdViSE/actions/workflows/serverDockerImage.yml)
 
 ### Adaptive Streaming Players Performance Testbed
 - Evaluates multi players or ABRs
