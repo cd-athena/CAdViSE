@@ -120,7 +120,8 @@ function WISHRuleClass() {
       qualityLevelList = getQualityFunctionLogarit(bitrates);
       const m_xi = 0.8;
       const m_delta = 1;
-      buffer_size = mediaPlayerModel.getStableBufferTime();
+      // buffer_size = mediaPlayerModel.getStableBufferTime();
+      console.log("------------------- buffer_size: " + buffer_size);
       setWeightsLogarit(m_xi, m_delta, qualityLevelList, SD);
 
       if (currentbufferS <= low_buff_thresS) {

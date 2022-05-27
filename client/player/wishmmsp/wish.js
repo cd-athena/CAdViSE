@@ -120,7 +120,8 @@ function WISHRuleClass() {
             const m_xi = 0.8;
             const m_delta = 1;
             buffer_size = mediaPlayerModel.getStableBufferTime();
-            console.log("------------------- currentbufferS: " + currentbufferS);
+            // buffer_size = 30; // = bufferTimeAtTopQuality
+            console.log("------------------- buffer_size: " + buffer_size);
             setWeights(m_xi, m_delta, qualityLevelList, SD);
 
             if (currentbufferS <= low_buff_thresS) {
@@ -156,7 +157,7 @@ function WISHRuleClass() {
 
             // If the bitrate is not changed
             if (next_selected_quality === last_selected_quality) {
-                console.log("\t\t Quality in NOT changed: " + next_selected_quality);
+                console.log("\t\t Quality is NOT changed: " + next_selected_quality);
                 return switchRequest;
             }
             else {
