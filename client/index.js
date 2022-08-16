@@ -37,7 +37,7 @@ app.get('/dataset/:title/:fileName', async (request, response) => {
     method: 'get',
     url: BASEURL + title + '/' + fileName
   }).then((serverResponse) => {
-    const manifest = serverResponse.data.replace(/.mp4/g, '.mp4?playerABR=' + playerABR).replace(/.m4s/g, '.m4s?playerABR=' + playerABR)
+    const manifest = serverResponse.data.replace(/.m4s/g, '.m4s?playerABR=' + playerABR)
     response.send(manifest)
   }).catch(console.error)
 })
