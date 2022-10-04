@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title> WISH ABR Algorithm</title>
+</head>
+<body>
+<div>
+    <video style="width: 1280px;height: 720px;" id="video"></video>
+</div>
+
+<script src="https://cdn.dashjs.org/v4.4.1/dash.all.min.js"></script>
+<script src="http://localhost/player/wishlogarithq/asset/wish_logarit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', () => {
+    const keyValues = window.location.search.substr(1).split('&')
+    let experimentId, title, alk
+
+    keyValues.forEach(keyValueString => {
+      let keyValueArray = keyValueString.split('=')
+      switch (keyValueArray[0]) {
+        case 'id':
+          experimentId = keyValueArray[1]
+          break
+        case 'title':
+          title = keyValueArray[1]
+          break
+        case 'alk':
+          alk = keyValueArray[1]
+          break
+      }
+    })
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs-wishlogarithq'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs-wishlogarithq'
+
+    const video = document.getElementById('video')
+    const player = dashjs.MediaPlayer().create()
+
+    player.updateSettings({
+      streaming: {
+        abr: {
+          useDefaultABRRules: false,
+          additionalAbrRules: {
+            insufficientBufferRule: false,
+            switchHistoryRule: false,
+            droppedFramesRule: false,
+            abandonRequestsRule: false
+          }
+        }
+      }
+    })
+
+    /* add custom ABR */
+    player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule)
+
+    // const events = ["loadstart",  "suspend", "abort", "error", "emptied", "stalled", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "seeking", "seeked", "ended", "durationchange", "play", "pause", "ratechange", "resize", "volumechange", "timeupdate", "progress"];
+    const events = ['loadstart', 'suspend', 'abort', 'error', 'emptied', 'stalled', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked', 'ended', 'durationchange', 'play', 'pause', 'ratechange']
+
+    events.forEach(event => {
+      video.addEventListener(event, e => {
+        axios.get(logURL.replace('%event%', e.type) + '&noCache=' + (new Date()).getTime()).catch(error => {
+          console.log(error)
+        })
+      })
+    })
+
+    player.initialize(video, mpdURL, false)
+    player.play()
+  })
+</script>
+</body>
+</html>

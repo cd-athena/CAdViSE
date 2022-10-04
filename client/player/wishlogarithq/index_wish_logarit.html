@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title> WISH-Logarit ABR Algorithm</title>
+</head>
+<body>
+<div>
+	<video id="videoPlayer" width="640" height="480" controls></video>	
+</div>
+
+<div>
+	Reported bitrate:<p id="reportedBitrate"></p>
+	Buffer level:<p id="bufferLevel"></p>
+	Framerate:<p id="framerate"></p>
+	Resolution:<p id="resolution"></p>
+
+</div>
+
+	<script src="https://cdn.dashjs.org/v3.2.2/dash.all.min.js"></script>
+	<script src="./wish_logarit.js"></script>
+	<script >
+		var player; 
+
+		(function() {
+			var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
+			var video = document.querySelector("#videoPlayer");
+			player = dashjs.MediaPlayer().create();
+
+			/* done use dash.js default rules*/
+			player.updateSettings({
+				streaming: {
+					abr: {
+						useDefaultABRRules: false,
+						'additionalAbrRules': {
+							insufficientBufferRule: false,
+							switchHistoryRule: false,
+							droppedFramesRule: false,
+							abandonRequestsRule: false
+						}
+					}
+				}
+			});
+
+			/* add custom ABR */
+			player.addABRCustomRule('qualitySwitchRules', 'WISHRule', WISHRule);
+
+			/* for autoplay*/
+			player.on(dashjs.MediaPlayer.events.PLAYBACK_NOT_ALLOWED, function (data) {
+				console.log('Playback did not start duto auto play restrictions. Mute audio and reloading');
+				video.muted = true;
+				player.initialize(video, url, true);
+			});
+			/* for autoplay*/
+
+			player.initialize(video, url, true);
+
+	        var eventPoller = setInterval(function () {
+	            var streamInfo = player.getActiveStream().getStreamInfo();
+	            var dashMetrics = player.getDashMetrics();
+	            var dashAdapter = player.getDashAdapter();
+
+	            if (dashMetrics && streamInfo) {
+	                const periodIdx = streamInfo.index;
+	                var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+	                var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+	                var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
+	                var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
+	                var currentRep = adaptation.Representation_asArray.find(function (rep) {
+	                    return rep.id === repSwitch.to
+	                })
+	                var frameRate = currentRep.frameRate;
+	                var resolution = currentRep.width + 'x' + currentRep.height;
+	                document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
+	                document.getElementById('framerate').innerText = frameRate + " fps";
+	                document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
+	                document.getElementById('resolution').innerText = resolution;
+	            }
+	        }, 1000);	
+
+		})();
+	</script>	
+
+</body>
+</html>
