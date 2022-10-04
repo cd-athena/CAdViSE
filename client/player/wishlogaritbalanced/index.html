@@ -11,7 +11,7 @@
 </div>
 
 <script src="https://cdn.dashjs.org/v4.4.1/dash.all.min.js"></script>
-<script src="http://localhost/player/wishmmsp/asset/wish.js"></script>
+<script src="http://localhost/player/wishlogaritbalanced/asset/wish_logarit.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', () => {
@@ -32,8 +32,8 @@
           break
       }
     })
-    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs3-wishmmsp'
-    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs3-wishmmsp'
+    const mpdURL = 'http://localhost/dataset/' + title + '/manifest.mpd?playerABR=dashjs-wishlogaritbalanced'
+    let logURL = 'http://localhost/log/' + title + '/%event%?playerABR=dashjs-wishlogaritbalanced'
 
     const video = document.getElementById('video')
     const player = dashjs.MediaPlayer().create()
@@ -42,7 +42,12 @@
       streaming: {
         abr: {
           useDefaultABRRules: false,
-          movingAverageMethod: 'ewma'
+          additionalAbrRules: {
+            insufficientBufferRule: false,
+            switchHistoryRule: false,
+            droppedFramesRule: false,
+            abandonRequestsRule: false
+          }
         }
       }
     })

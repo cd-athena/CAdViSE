@@ -2,7 +2,7 @@
 
 ########################### configurations ###########################
 # some of these would be overwritten by arguments passed to the command
-players=("bitmovin" "dashjs" "shaka" "bola" "wishmmsp" "wishlog")
+players=("bitmovin" "dashjs" "shaka" "bola")
 experiments=1
 shaperDurations=(15)   #s
 serverIngresses=(5000) #Kbps
