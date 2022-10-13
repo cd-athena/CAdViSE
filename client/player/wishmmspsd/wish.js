@@ -99,6 +99,8 @@ function WISHRuleClass() {
             switchRequest.reason.throughput = lastThroughputKbps;
             switchRequest.reason.latency = 0;
 
+            console.log("\t Current buffer: " + currentBufferS + "s")
+
             if (last_selected_quality != abr.getQualityFor(mediaType, streamController.getActiveStreamInfo().id)) {
                 last_selected_quality = abr.getQualityFor(mediaType, streamController.getActiveStreamInfo().id);
 
@@ -129,23 +131,23 @@ function WISHRuleClass() {
 
                 if (max_quality === 0) {
                     next_selected_quality = max_quality;
-                }
-
-                for (let i = 1; i <= max_quality; i++) {
-                    let currentTotalCost = Math.round(multiplier*getTotalCost_v3(rulesContext, bitrates, i, estimated_throghputKbps, currentBufferS, num_downloaded_segments));
-                    if (currentTotalCost <= lowest_cost) {
-                        next_selected_quality = i;
-                        lowest_cost = currentTotalCost;
+                } else {
+                    for (let i = 1; i <= max_quality; i++) {
+                        let currentTotalCost = Math.round(multiplier*getTotalCost_v3(rulesContext, bitrates, i, estimated_throghputKbps, currentBufferS, num_downloaded_segments));
+                        if (currentTotalCost <= lowest_cost) {
+                            next_selected_quality = i;
+                            lowest_cost = currentTotalCost;
+                        }
                     }
                 }
 
             }
 
             // check if it's suitable to decrease the quality
-            const threshold_ = 0.2
-            if (lastBufferS - currentBufferS < lastBufferS*threshold_ && next_selected_quality < last_selected_quality) {
-                next_selected_quality = last_selected_quality;
-            }
+            // const threshold_ = 0.2
+            // if (lastBufferS - currentBufferS < lastBufferS*threshold_ && next_selected_quality < last_selected_quality) {
+            //     next_selected_quality = last_selected_quality;
+            // }
 
             lastBufferS = currentBufferS;
             console.log("\t ==> Select next quality: " + next_selected_quality)
